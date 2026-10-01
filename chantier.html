@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Chantier</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3a5f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chantier">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background:#fff; padding:10px; font-size:13px; }
+  .container { max-width:1150px; margin:auto; background:#fff; }
+
+  .menu-principal { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; background:#0f1e3d; padding:10px; border-radius:6px; align-items:center; }
+  .menu-principal button { background:#1e3a5f; color:#fff; border:none; padding:10px 14px; cursor:pointer; border-radius:5px; font-size:13px; font-weight:bold; }
+  .menu-principal button.active { background:#f6ad55; color:#1a1a1a; }
+  .devise-box { margin-left:auto; display:flex; align-items:center; gap:6px; background:#fff; padding:6px 10px; border-radius:5px; }
+  .devise-box label { font-size:12px; font-weight:bold; color:#0f1e3d; }
+  .devise-box select { padding:6px 10px; border:2px solid #0f1e3d; border-radius:4px; font-weight:bold; font-size:13px; background:#f6ad55; color:#1a1a1a; cursor:pointer; }
+
+  .sous-menu { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; background:#1e3a5f; padding:8px; border-radius:6px; }
+  .sous-menu button { background:#2c5282; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; font-size:12px; }
+  .sous-menu button.active { background:#f6ad55; color:#1a1a1a; font-weight:bold; }
+
+  .app-section { display:none; }
+  .app-section.active { display:block; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .titre-principal { background:#e30613; color:#fff; text-align:center; font-weight:bold; font-size:20px; padding:8px; border:3px solid #000; letter-spacing:1px; }
+  .section-titre { background:#ffe600; color:#000; font-weight:bold; font-size:14px; padding:6px; border:3px solid #000; border-top:none; text-align:left; padding-left:12px; }
+  .ligne-info { display:grid; grid-template-columns:1fr 1fr; border:3px solid #000; border-top:none; }
+  .cell-info { padding:8px 12px; font-weight:bold; font-size:14px; text-align:center; border-right:3px solid #000; }
+  .cell-info:last-child { border-right:none; }
+  .cell-info.bleu { background:#0000ff; color:#fff; }
+  .cell-info.rouge { background:#e30613; color:#fff; font-size:20px; padding:10px 8px; }
+  .cell-info.blanc { background:#fff; color:#000; font-size:15px; padding:10px 8px; }
+  .cell-info.vert { background:#00c000; color:#000; font-size:20px; padding:10px 8px; }
+
+  table.pointage, table.fact, table.mvts { width:100%; border-collapse:collapse; border:3px solid #000; border-top:none; font-size:11px; }
+  table.pointage th, table.fact th, table.mvts th { padding:6px 2px; text-align:center; border:2px solid #000; background:#1e3a5f; color:#fff; font-weight:bold; }
+  table.pointage th.weekend { background:#e30613; }
+  table.pointage td, table.fact td, table.mvts td { border:2px solid #000; padding:4px 2px; text-align:center; font-size:12px; }
+  table.pointage td.nom-cell { background:#fff; text-align:left; font-weight:bold; padding-left:8px; min-width:110px; }
+  table.pointage td.tache-cell { background:#edf2f7; text-align:left; padding-left:8px; font-size:11px; min-width:80px; }
+  table.pointage td input { width:38px; padding:4px 2px; text-align:center; border:1px solid #999; border-radius:3px; font-size:12px; }
+  table.pointage td.total-cell { background:#00c000; color:#000; font-weight:bold; font-size:13px; min-width:45px; }
+  table.pointage td.montant-cell { background:#ffe600; color:#000; font-weight:bold; font-size:12px; min-width:70px; }
+  table.pointage td.solde-cell { background:#e30613; color:#fff; font-weight:bold; font-size:12px; min-width:70px; }
+  table.pointage tr.total td, table.fact tr.total td { background:#a00000; color:#fff; font-weight:bold; font-size:13px; padding:8px 4px; border:2px solid #000; }
+  table.pointage tr.total td.total-total, table.fact tr.total td.total-total { background:#00c000; color:#000; }
+  table.pointage tr.total td.total-montant, table.fact tr.total td.total-montant { background:#ffe600; color:#000; }
+  table.pointage tr.total td.total-solde, table.fact tr.total td.total-solde { background:#e30613; color:#fff; }
+  table.fact td.col-total { background:#ffe600; font-weight:bold; }
+  table.fact td.col-acompte { background:#00ff00; font-weight:bold; }
+  table.fact td.col-solde { background:#e30613; color:#fff; font-weight:bold; }
+  table.mvts td.col-entree { background:#00ff00; }
+  table.mvts td.col-sortie { background:#ffe600; }
+  table.mvts td.col-reste { background:#e30613; font-weight:bold; }
+
+  table.resume { width:100%; border-collapse:collapse; border:3px solid #000; border-top:none; }
+  table.resume td { border:2px solid #000; padding:8px 12px; font-weight:bold; font-size:15px; width:50%; text-align:center; }
+  table.resume tr.montant td.label { background:#00c000; color:#000; }
+  table.resume tr.acompte td.label { background:#00a000; color:#fff; }
+  table.resume tr.solde td.label { background:#e30613; color:#fff; }
+  table.resume tr.arriere td.label { background:#800000; color:#fff; }
+  table.resume tr.statut td.label { background:#4a0000; color:#fff; }
+  table.resume td.valeur { background:#fff; color:#000; font-size:16px; }
+  table.resume tr.solde td.valeur { background:#000; color:#fff; }
+  table.resume tr.arriere td.valeur { background:#000; color:#ffe600; }
+  table.resume tr.statut td.valeur { background:#000; color:#fff; }
+
+  table.inv { width:100%; border-collapse:collapse; border:3px solid #000; border-top:none; }
+  table.inv td { border:2px solid #000; padding:8px 12px; font-weight:bold; font-size:15px; text-align:center; }
+  table.inv tr.theo td.label { background:#00c000; color:#000; }
+  table.inv tr.phys td.label { background:#e30613; color:#fff; }
+  table.inv tr.ecart td.label { background:#800000; color:#fff; }
+  table.inv tr.ecart td.valeur { background:#000; color:#fff; }
+
+  .obs-titre { background:#ffe600; color:#000; font-weight:bold; padding:6px 12px; border:3px solid #000; border-top:none; font-size:14px; }
+  .obs-zone { border:3px solid #000; border-top:none; padding:10px; min-height:70px; }
+  .obs-zone textarea { width:100%; border:none; outline:none; font-family:Arial; font-size:13px; resize:vertical; min-height:50px; }
+
+  .form-box { background:#f4f4f4; border:2px solid #000; padding:10px; margin-bottom:12px; border-radius:4px; }
+  .form-box h3 { font-size:14px; margin-bottom:8px; color:#1e3a5f; }
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; }
+  .form-grid label { font-size:11px; font-weight:bold; color:#333; display:block; margin-bottom:2px; }
+  .form-grid input, .form-grid select { width:100%; padding:6px; border:1px solid #999; border-radius:4px; font-size:12px; }
+
+  .btn { border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-size:12px; color:#fff; }
+  .btn.vert { background:#00a000; }
+  .btn.rouge { background:#e30613; }
+  .btn.bleu { background:#0000cc; }
+  .btn.gris { background:#666; }
+  .btn.orange { background:#dd6b20; }
+  .btn.violet { background:#6b21a8; }
+  .btn.small { padding:3px 6px; font-size:10px; }
+  .btn.full { width:100%; }
+  .actions-bar { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+
+  table.liste { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  table.liste th { background:#1e3a5f; color:#fff; padding:6px; border:1px solid #999; font-size:11px; }
+  table.liste td { border:1px solid #ccc; padding:5px 6px; text-align:left; }
+  table.liste tr:nth-child(even) { background:#f7fafc; }
+  .badge { padding:2px 6px; border-radius:8px; font-size:10px; font-weight:bold; }
+  .badge.ok { background:#c6f6d5; color:#22543d; }
+  .badge.partiel { background:#fefcbf; color:#744210; }
+  .badge.impaye { background:#fed7d7; color:#822727; }
+
+  .totaux { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; font-weight:bold; color:#1e3a5f; font-size:12px; }
+  .totaux div { background:#edf2f7; padding:6px 10px; border-radius:5px; }
+  .msg { padding:8px; border-radius:5px; margin:8px 0; font-size:12px; display:none; font-weight:bold; }
+  .msg.ok { background:#c6f6d5; color:#22543d; display:block; }
+  .msg.err { background:#fed7d7; color:#822727; display:block; }
+
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; padding:10px; }
+  .modal.active { display:flex; }
+  .modal-content { background:#fff; padding:20px; border-radius:8px; max-width:500px; width:100%; max-height:90vh; overflow:auto; }
+  .modal-content h3 { font-size:15px; margin-bottom:10px; color:#1e3a5f; }
+  .modal-content label { font-size:12px; font-weight:bold; display:block; margin-bottom:3px; margin-top:6px; }
+  .modal-content input, .modal-content select { width:100%; padding:7px; border:1px solid #ccc; border-radius:5px; font-size:13px; }
+
+  .scroll-x { overflow-x:auto; }
+  .acompte-ligne { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border:1px solid #ccc; border-radius:4px; margin-bottom:4px; background:#fff; }
+  .acompte-ligne span { font-size:12px; }
+  .search-bar { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .search-bar input { flex:1; padding:8px; border:2px solid #000; border-radius:4px; font-size:13px; min-width:150px; }
+
+  @media print {
+    body { background:#fff; padding:0; }
+    .no-print, .menu-principal, .sous-menu, .form-box, .actions-bar, .search-bar { display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="menu-principal no-print">
+    <button id="btnMenuJournaliers" class="active" onclick="afficherApp('journaliers')">👷 Journaliers</button>
+    <button id="btnMenuFournisseurs" onclick="afficherApp('fournisseurs')">🚚 Fournisseurs</button>
+    <button id="btnMenuStock" onclick="afficherApp('stock')">📦 Stock Dépôt</button>
+    <div class="devise-box">
+      <label>💰 Devise :</label>
+      <select id="selectDevise" onchange="changerDevise()">
+        <option value="FC">FC</option>
+        <option value="USD">USD</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="appJournaliers" class="app-section active">
+    <div class="sous-menu no-print">
+      <button id="j-navFiche" class="active" onclick="afficherPageJ('fiche')">📋 Fiche journalier</button>
+      <button id="j-navListe" onclick="afficherPageJ('liste')">👷 Liste des journaliers</button>
+      <button id="j-navReleve" onclick="afficherPageJ('releve')">📅 Relevé de pointage</button>
+      <button id="j-navRapports" onclick="afficherPageJ('rapports')">📊 Rapports</button>
+    </div>
+
+    <div id="j-pageFiche" class="page active">
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <input type="text" id="rechercheFiche" placeholder="🔍 Rechercher..." oninput="filtrerSelect()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-size:13px;">
+      </div>
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="selectJournalier" onchange="chargerFiche()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;"></select>
+        <button class="btn vert" onclick="ouvrirModalNouveauJournalier()">➕ Nouveau</button>
+        <button class="btn violet" onclick="ouvrirModalAcomptes()">💰 Acomptes</button>
+        <button class="btn rouge" onclick="supprimerJournalierFiche()">🗑️ Supprimer</button>
+      </div>
+
+      <div class="form-box no-print">
+        <h3>📅 Période et tarif</h3>
+        <div class="form-grid">
+          <div><label>Mois</label>
+            <select id="pMois" onchange="chargerFiche()">
+              <option value="0">Janvier</option><option value="1">Février</option><option value="2">Mars</option>
+              <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
+              <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
+              <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
+            </select>
+          </div>
+          <div><label>Année</label><input type="number" id="pAnnee" value="2026" onchange="chargerFiche()"></div>
+          <div><label>Montant / jour (<span class="lbl-devise">FC</span>)</label><input type="number" id="pMontantJour" value="5000" min="0" step="100" onchange="sauverMontantJour()"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="sauverMontantJour()">💾 Sauver tarif</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:6px;">
+          Saisie : <b>1</b> = jour complet · <b>0,5</b> = demi-journée · <b>0</b> = absent
+        </div>
+        <div id="msgF" class="msg"></div>
+      </div>
+
+      <div id="zoneFiche">
+        <div class="titre-principal">FICHE JOURNALIER</div>
+        <div class="section-titre">1. INFORMATIONS SUR LE JOURNALIER</div>
+        <div class="ligne-info">
+          <div class="cell-info bleu">Nom complet</div>
+          <div class="cell-info bleu">Tâche</div>
+        </div>
+        <div class="ligne-info">
+          <div class="cell-info blanc" id="infoNom">—</div>
+          <div class="cell-info blanc" id="infoTache">—</div>
+        </div>
+
+        <div class="section-titre">2. POINTAGE DU MOIS</div>
+        <div class="scroll-x">
+          <table class="pointage" id="tablePointage">
+            <thead id="theadPointage"></thead>
+            <tbody id="corpsPointage"></tbody>
+            <tfoot id="tfootPointage"></tfoot>
+          </table>
+        </div>
+
+        <div class="section-titre">3. RÉSUMÉ FINANCIER DU MOIS</div>
+        <table class="resume">
+          <tr class="montant"><td class="label">MONTANT DU MOIS</td><td class="valeur" id="resumeMontant">0</td></tr>
+          <tr class="acompte"><td class="label">ACOMPTES DU MOIS</td><td class="valeur" id="resumeAcompte">0</td></tr>
+          <tr class="solde"><td class="label">SOLDE DU MOIS</td><td class="valeur" id="resumeSolde">0</td></tr>
+          <tr class="arriere"><td class="label">ARRIÉRÉS (mois précédents)</td><td class="valeur" id="resumeArrieres">0</td></tr>
+          <tr class="statut"><td class="label">TOTAL À PAYER</td><td class="valeur" id="resumeStatut">—</td></tr>
+        </table>
+
+        <div class="obs-titre">OBSERVATION</div>
+        <div class="obs-zone"><textarea id="observation" placeholder="Saisir une observation..."></textarea></div>
+
+        <div class="actions-bar no-print">
+          <button class="btn bleu" onclick="window.print()">🖨️ PDF / Imprimer</button>
+          <button class="btn vert" onclick="exporterWordJ()">📄 Word</button>
+          <button class="btn vert" onclick="envoyerWhatsAppJ()">📱 WhatsApp</button>
+          <button class="btn gris" onclick="sauvegarderObservation()">💾 Sauver observation</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="j-pageListe" class="page">
+      <div class="form-box no-print">
+        <h3>➕ Ajouter un nouveau journalier</h3>
+        <div class="form-grid">
+          <div><label>Nom complet</label><input id="pNom" placeholder="Nom et prénom"></div>
+          <div><label>Tâche</label><input id="pTache" placeholder="Ex: Maçonnerie"></div>
+          <div><label>Téléphone</label><input type="tel" id="pTel" placeholder="+243 ..."></div>
+          <div><label>Montant / jour</label><input type="number" id="pMontantInit" value="5000" min="0" step="100"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="ajouterJournalierListe()">Ajouter</button>
+          </div>
+        </div>
+        <div id="msgP" class="msg"></div>
+      </div>
+
+      <h3 style="margin:10px 0;color:#1e3a5f;">👷 Liste des journaliers</h3>
+      <div class="search-bar no-print">
+        <input type="text" id="rechercheListe" placeholder="🔍 Rechercher par nom ou tâche..." oninput="renderListe()">
+      </div>
+      <div class="scroll-x">
+        <table class="liste">
+          <thead>
+            <tr>
+              <th>Nom</th><th>Tâche</th><th>Téléphone</th><th>Tarif/j</th>
+              <th>Jours du mois</th><th>Montant</th><th>Acomptes</th>
+              <th>Solde mois</th><th>Arriérés</th><th>Total dû</th><th>Statut</th>
+              <th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="corpsListe"></tbody>
+        </table>
+      </div>
+      <div class="totaux" id="totauxListe"></div>
+    </div>
+
+    <div id="j-pageReleve" class="page">
+      <div class="search-bar no-print">
+        <input type="text" id="rechercheReleve" placeholder="🔍 Rechercher un journalier..." oninput="filtrerSelectReleve()">
+      </div>
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="selectReleve" onchange="afficherReleve()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;"></select>
+        <select id="rMois" onchange="afficherReleve()" style="padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;">
+          <option value="0">Janvier</option><option value="1">Février</option><option value="2">Mars</option>
+          <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
+          <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
+          <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
+        </select>
+        <input type="number" id="rAnnee" value="2026" onchange="afficherReleve()" style="padding:8px;border:2px solid #000;border-radius:4px;width:100px;font-weight:bold;">
+      </div>
+      <div id="zoneReleve"></div>
+    </div>
+
+    <div id="j-pageRapports" class="page">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn bleu" onclick="afficherRapportJ('global')">📊 Rapport global</button>
+        <button class="btn orange" onclick="afficherRapportJ('detail')">📋 Rapport détaillé</button>
+        <button class="btn violet" onclick="afficherRapportJ('arrieres')">💰 Rapport arriérés</button>
+        <button class="btn vert" onclick="envoyerRapportWhatsAppJ()">📱 WhatsApp</button>
+        <button class="btn bleu" onclick="exporterRapportWordJ()">📄 Word</button>
+        <button class="btn rouge" onclick="window.print()">🖨️ PDF</button>
+      </div>
+      <div id="zoneRapport"></div>
+    </div>
+  </div>
+    <div id="appFournisseurs" class="app-section">
+    <div class="sous-menu no-print">
+      <button id="f-navFiche" class="active" onclick="afficherPageF('fiche')">📋 Fiche fournisseur</button>
+      <button id="f-navListe" onclick="afficherPageF('liste')">🚚 Liste des fournisseurs</button>
+      <button id="f-navReleve" onclick="afficherPageF('releve')">📅 Relevé fournisseur</button>
+      <button id="f-navRapports" onclick="afficherPageF('rapports')">📊 Rapports</button>
+    </div>
+
+    <div id="f-pageFiche" class="page active">
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <input type="text" id="rechercheFournisseur" placeholder="🔍 Rechercher un fournisseur..." oninput="filtrerSelectFournisseur()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-size:13px;">
+      </div>
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="selectFournisseur" onchange="chargerFicheF()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;"></select>
+        <button class="btn vert" onclick="ouvrirModalNouveauFournisseur()">➕ Nouveau</button>
+        <button class="btn rouge" onclick="supprimerFournisseurFiche()">🗑️ Supprimer</button>
+      </div>
+
+      <div class="form-box no-print">
+        <h3>➕ Ajouter une fourniture</h3>
+        <div class="form-grid">
+          <div><label>Date</label><input type="date" id="fDate"></div>
+          <div><label>Produit</label><input type="text" id="fProduit" placeholder="Ex: Ciment"></div>
+          <div><label>Unité</label>
+            <select id="fUnite">
+              <option>Pièce</option><option>Sac</option><option>Kg</option>
+              <option>m³</option><option>Litre</option><option>Barre</option>
+            </select>
+          </div>
+          <div><label>Quantité</label><input type="number" id="fQte" value="1" min="0" step="0.01"></div>
+          <div><label>Prix unitaire</label><input type="number" id="fPU" value="0" min="0" step="0.01"></div>
+          <div><label>Acompte versé</label><input type="number" id="fAcompte" value="0" min="0" step="0.01"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="ajouterFourniture()">Ajouter</button>
+          </div>
+        </div>
+        <div id="msgFF" class="msg"></div>
+      </div>
+
+      <div id="zoneFicheF">
+        <div class="titre-principal">FICHE FOURNISSEUR</div>
+        <div class="section-titre">1. INFORMATIONS SUR LE FOURNISSEUR</div>
+        <div class="ligne-info">
+          <div class="cell-info bleu">Nom du fournisseur</div>
+          <div class="cell-info bleu">Téléphone</div>
+        </div>
+        <div class="ligne-info">
+          <div class="cell-info blanc" id="infoFNom">—</div>
+          <div class="cell-info blanc" id="infoFTel">—</div>
+        </div>
+
+        <div class="section-titre">2. DÉTAIL DES FOURNITURES</div>
+        <div class="scroll-x">
+          <table class="fact">
+            <thead>
+              <tr>
+                <th>DATE</th><th>PRODUIT</th><th>UNITÉ</th><th>QTÉ</th><th>P.U.</th>
+                <th>TOTAL</th><th>ACOMPTE</th><th>SOLDE</th>
+                <th class="no-print">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="corpsFournitures"></tbody>
+            <tfoot>
+              <tr class="total">
+                <td colspan="5">TOTAL</td>
+                <td class="total-total" id="fTotalTotal">0</td>
+                <td class="total-montant" id="fTotalAcompte">0</td>
+                <td class="total-solde" id="fTotalSolde">0</td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="section-titre">3. RÉSUMÉ FINANCIER</div>
+        <table class="resume">
+          <tr class="montant"><td class="label">MONTANT TOTAL DES ACHATS</td><td class="valeur" id="fResumeTotal">0</td></tr>
+          <tr class="acompte"><td class="label">TOTAL DES ACOMPTES VERSÉS</td><td class="valeur" id="fResumeAcompte">0</td></tr>
+          <tr class="solde"><td class="label">SOLDE À PAYER</td><td class="valeur" id="fResumeSolde">0</td></tr>
+        </table>
+
+        <div class="obs-titre">OBSERVATION</div>
+        <div class="obs-zone"><textarea id="fObservation" placeholder="Saisir une observation..."></textarea></div>
+
+        <div class="actions-bar no-print">
+          <button class="btn bleu" onclick="window.print()">🖨️ PDF / Imprimer</button>
+          <button class="btn vert" onclick="exporterWordF()">📄 Word</button>
+          <button class="btn vert" onclick="envoyerWhatsAppF()">📱 WhatsApp</button>
+          <button class="btn gris" onclick="sauvegarderObservationF()">💾 Sauver observation</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="f-pageListe" class="page">
+      <div class="form-box no-print">
+        <h3>➕ Ajouter un nouveau fournisseur</h3>
+        <div class="form-grid">
+          <div><label>Nom</label><input id="fNomInit" placeholder="Ex: SARL BATIMAT"></div>
+          <div><label>Téléphone</label><input type="tel" id="fTelInit" placeholder="+243 ..."></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="ajouterFournisseurListe()">Ajouter</button>
+          </div>
+        </div>
+        <div id="msgFP" class="msg"></div>
+      </div>
+
+      <h3 style="margin:10px 0;color:#1e3a5f;">🚚 Liste des fournisseurs</h3>
+      <div class="search-bar no-print">
+        <input type="text" id="rechercheListeF" placeholder="🔍 Rechercher par nom..." oninput="renderListeF()">
+      </div>
+      <div class="scroll-x">
+        <table class="liste">
+          <thead>
+            <tr>
+              <th>Nom</th><th>Téléphone</th><th>Nb fournitures</th>
+              <th>Total achats</th><th>Acomptes</th><th>Solde dû</th>
+              <th>État</th><th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="corpsListeF"></tbody>
+        </table>
+      </div>
+      <div class="totaux" id="totauxListeF"></div>
+    </div>
+
+    <div id="f-pageReleve" class="page">
+      <div class="search-bar no-print">
+        <input type="text" id="rechercheReleveF" placeholder="🔍 Rechercher un fournisseur..." oninput="filtrerSelectReleveF()">
+      </div>
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="selectReleveF" onchange="afficherReleveF()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;"></select>
+        <select id="rMoisF" onchange="afficherReleveF()" style="padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;">
+          <option value="0">Janvier</option><option value="1">Février</option><option value="2">Mars</option>
+          <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
+          <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
+          <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
+        </select>
+        <input type="number" id="rAnneeF" value="2026" onchange="afficherReleveF()" style="padding:8px;border:2px solid #000;border-radius:4px;width:100px;font-weight:bold;">
+        <select id="rStatutF" onchange="afficherReleveF()" style="padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;">
+          <option value="tous">Toutes les fournitures</option>
+          <option value="paye">Payées</option>
+          <option value="partiel">Partielles</option>
+          <option value="impaye">Impayées</option>
+        </select>
+      </div>
+      <div id="zoneReleveF"></div>
+    </div>
+
+    <div id="f-pageRapports" class="page">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn bleu" onclick="afficherRapportF('global')">📊 Rapport global</button>
+        <button class="btn orange" onclick="afficherRapportF('detail')">📋 Rapport détaillé</button>
+        <button class="btn violet" onclick="afficherRapportF('impayes')">💰 Rapport impayés</button>
+        <button class="btn vert" onclick="envoyerRapportWhatsAppF()">📱 WhatsApp</button>
+        <button class="btn bleu" onclick="exporterRapportWordF()">📄 Word</button>
+        <button class="btn rouge" onclick="window.print()">🖨️ PDF</button>
+      </div>
+      <div id="zoneRapportF"></div>
+    </div>
+  </div>
+
+  <div id="appStock" class="app-section">
+    <div class="sous-menu no-print">
+      <button id="s-navFiche" class="active" onclick="afficherPageS('fiche')">📋 Fiche de stock</button>
+      <button id="s-navDepot" onclick="afficherPageS('depot')">📦 Dépôt</button>
+      <button id="s-navRapports" onclick="afficherPageS('rapports')">📊 Rapports</button>
+    </div>
+
+    <div id="s-pageFiche" class="page active">
+      <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="selectProduit" onchange="chargerFicheS()" style="flex:1;padding:8px;border:2px solid #000;border-radius:4px;font-weight:bold;"></select>
+        <button class="btn vert" onclick="ouvrirModalNouveauProduit()">➕ Nouvelle fiche</button>
+        <button class="btn rouge" onclick="supprimerProduit()">🗑️ Supprimer</button>
+      </div>
+
+      <div class="form-box no-print">
+        <h3>➕ Ajouter un mouvement de stock</h3>
+        <div class="form-grid">
+          <div><label>Date</label><input type="date" id="mDate"></div>
+          <div><label>Type</label>
+            <select id="mType"><option value="entree">Entrée</option><option value="sortie">Sortie</option></select>
+          </div>
+          <div><label>Quantité</label><input type="number" id="mQte" value="1" min="0" step="0.01"></div>
+          <div><label>Motif / Référence</label><input type="text" id="mMotif" placeholder="Ex: Fournisseur SARL"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="ajouterMouvement()">Ajouter</button>
+          </div>
+        </div>
+        <div id="msgM" class="msg"></div>
+      </div>
+
+      <div id="zoneFicheS">
+        <div class="titre-principal">FICHE DE STOCK</div>
+
+        <div class="section-titre">1. INFORMATIONS SUR LE PRODUIT</div>
+        <div class="ligne-info">
+          <div class="cell-info bleu">Désignation du produit</div>
+          <div class="cell-info bleu" id="infoSNomLabel">—</div>
+        </div>
+
+        <div class="section-titre">2. STOCK INITIAL</div>
+        <div class="ligne-info">
+          <div class="cell-info bleu">Stock initial</div>
+          <div class="cell-info bleu">Date</div>
+        </div>
+        <div class="ligne-info">
+          <div class="cell-info rouge" id="stockInitial">0</div>
+          <div class="cell-info rouge" id="dateInitiale">—</div>
+        </div>
+
+        <div class="section-titre">3. MOUVEMENT DE STOCK</div>
+        <div class="scroll-x">
+          <table class="mvts">
+            <thead>
+              <tr>
+                <th>DATE</th><th>ENTREES</th><th>SORTIES</th><th>STOCK RESTANT</th><th>MOTIF/REFERENCE</th>
+                <th class="no-print">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="corpsMvts"></tbody>
+            <tfoot>
+              <tr class="total">
+                <td>TOTAL</td>
+                <td class="total-total" id="sTotalEntrees">0</td>
+                <td class="total-montant" id="sTotalSorties">0</td>
+                <td class="total-solde" id="sTotalReste">0</td>
+                <td></td><td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="section-titre">4. INVENTAIRE & OBSERVATIONS</div>
+        <table class="inv">
+          <tr class="theo"><td class="label">STOCK THEORIQUE</td><td class="valeur" id="stockTheorique">0</td></tr>
+          <tr class="phys"><td class="label">STOCK PHYSIQUE</td><td class="valeur">
+            <input type="number" id="stockPhysique" value="0" onchange="calculerEcart()"
+                   style="width:100%;border:none;text-align:center;font-size:16px;font-weight:bold;outline:none;background:transparent;">
+          </td></tr>
+          <tr class="ecart"><td class="label">ECART</td><td class="valeur" id="ecart">0</td></tr>
+        </table>
+
+        <div class="obs-titre">OBSERVATION</div>
+        <div class="obs-zone"><textarea id="sObservation" placeholder="Saisir une observation..."></textarea></div>
+
+        <div class="actions-bar no-print">
+          <button class="btn bleu" onclick="window.print()">🖨️ PDF / Imprimer</button>
+          <button class="btn vert" onclick="exporterWordS()">📄 Word</button>
+          <button class="btn vert" onclick="envoyerWhatsAppS()">📱 WhatsApp</button>
+          <button class="btn gris" onclick="sauvegarderObservationS()">💾 Sauver observation</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="s-pageDepot" class="page">
+      <div class="form-box no-print">
+        <h3>➕ Ajouter un nouveau produit au dépôt</h3>
+        <div class="form-grid">
+          <div><label>Désignation</label><input id="sNomInit" placeholder="Ex: Ciment 50kg"></div>
+          <div><label>Unité</label>
+            <select id="sUniteInit">
+              <option>Pièce</option><option>Sac</option><option>Kg</option>
+              <option>m³</option><option>Litre</option><option>Barre</option>
+            </select>
+          </div>
+          <div><label>Stock initial</label><input type="number" id="sInitialInit" value="0" min="0"></div>
+          <div><label>Date initiale</label><input type="date" id="sDateInit"></div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn vert full" onclick="ajouterProduitDepot()">Ajouter au dépôt</button>
+          </div>
+        </div>
+        <div id="msgSP" class="msg"></div>
+      </div>
+
+      <h3 style="margin:10px 0;color:#1e3a5f;">📦 Liste des produits en dépôt</h3>
+      <div class="scroll-x">
+        <table class="liste">
+          <thead>
+            <tr>
+              <th>Produit</th><th>Unité</th><th>Stock initial</th>
+              <th>Entrées</th><th>Sorties</th><th>Stock actuel</th>
+              <th>État</th><th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="corpsDepot"></tbody>
+        </table>
+      </div>
+      <div class="totaux" id="totauxDepot"></div>
+    </div>
+
+    <div id="s-pageRapports" class="page">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn bleu" onclick="afficherRapportS('global')">📊 Rapport global</button>
+        <button class="btn orange" onclick="afficherRapportS('detail')">📋 Rapport détaillé</button>
+        <button class="btn vert" onclick="envoyerRapportWhatsAppS()">📱 WhatsApp</button>
+        <button class="btn bleu" onclick="exporterRapportWordS()">📄 Word</button>
+        <button class="btn rouge" onclick="window.print()">🖨️ PDF</button>
+      </div>
+      <div id="zoneRapportS"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+  var DBget = function(k, def){ try { var v = localStorage.getItem('ch_'+k); return v!==null ? JSON.parse(v) : def; } catch(e){ return def; } };
+var DBset = function(k,v){ localStorage.setItem('ch_'+k, JSON.stringify(v)); };
+
+var journaliers = DBget('journaliers', []);
+var pointages = DBget('pointages', []);
+var configs = DBget('configs', {});
+var obsJ = DBget('obsJ', {});
+var acomptes = DBget('acomptes', []);
+
+var fournisseurs = DBget('fournisseurs', []);
+var fournitures = DBget('fournitures', []);
+var obsF = DBget('obsF', {});
+
+var stocks = DBget('stocks', []);
+var mouvements = DBget('mouvements', []);
+var stockInitialData = DBget('stockInitialData', {});
+var obsS = DBget('obsS', {});
+
+var devise = DBget('devise', 'FC');
+var symboles = { 'FC': 'FC', 'USD': '$' };
+
+function symboleDevise(){ return symboles[devise] || 'FC'; }
+
+function changerDevise(){
+  devise = document.getElementById('selectDevise').value;
+  DBset('devise', devise);
+  document.querySelectorAll('.lbl-devise').forEach(function(e){ e.textContent = devise; });
+  chargerFiche(); renderListe();
+  chargerFicheF(); renderListeF(); afficherReleveF();
+  chargerFicheS(); renderDepot();
+  if(document.getElementById('zoneRapport').innerHTML.trim() !== '') afficherRapportJ('global');
+  if(document.getElementById('zoneRapportF').innerHTML.trim() !== '') afficherRapportF('global');
+  if(document.getElementById('zoneRapportS').innerHTML.trim() !== '') afficherRapportS('global');
+}
+
+function $(id){ return document.getElementById(id); }
+function fmt(n){ var v = Number(n)||0; return (Math.round(v*100)/100).toLocaleString('fr-FR'); }
+function mt(n){ return fmt(n) + ' ' + symboleDevise(); }
+function pad2(n){ return (n<10?'0':'')+n; }
+function formaterDate(iso){
+  if(!iso) return '';
+  var p = iso.split('-');
+  if(p.length !== 3) return iso;
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function sauverTout(){
+  DBset('journaliers', journaliers); DBset('pointages', pointages);
+  DBset('configs', configs); DBset('obsJ', obsJ); DBset('acomptes', acomptes);
+  DBset('fournisseurs', fournisseurs); DBset('fournitures', fournitures); DBset('obsF', obsF);
+  DBset('stocks', stocks); DBset('mouvements', mouvements);
+  DBset('stockInitialData', stockInitialData); DBset('obsS', obsS);
+}
+
+function afficherApp(nom){
+  document.querySelectorAll('.app-section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.menu-principal > button').forEach(function(b){ b.classList.remove('active'); });
+  if(nom === 'journaliers'){ $('appJournaliers').classList.add('active'); $('btnMenuJournaliers').classList.add('active'); }
+  if(nom === 'fournisseurs'){ $('appFournisseurs').classList.add('active'); $('btnMenuFournisseurs').classList.add('active'); remplirSelectFournisseur(); chargerFicheF(); }
+  if(nom === 'stock'){ $('appStock').classList.add('active'); $('btnMenuStock').classList.add('active'); remplirSelectProduit(); chargerFicheS(); renderDepot(); }
+}
+
+function initDemo(){
+  if(journaliers.length === 0){
+    journaliers.push({ id:1, nom:'Jean KABILA', tache:'Maçonnerie', tel:'+243 800 111 222', archive:false });
+    journaliers.push({ id:2, nom:'Pierre MUKENDI', tache:'Coffrage', tel:'+243 800 333 444', archive:false });
+    configs[1] = { montantJour: 5000 };
+    configs[2] = { montantJour: 6000 };
+    var annee = new Date().getFullYear(), mois = new Date().getMonth();
+    for(var d=1; d<=10; d++){
+      var dateStr = annee+'-'+pad2(mois+1)+'-'+pad2(d);
+      var jour = new Date(annee, mois, d).getDay();
+      if(jour !== 0){
+        pointages.push({ id: 'p1_'+d, journalierId:1, date:dateStr, valeur:1 });
+        pointages.push({ id: 'p2_'+d, journalierId:2, date:dateStr, valeur: jour===6?0.5:1 });
+      }
+    }
+    acomptes.push({ id:1, journalierId:1, date:annee+'-'+pad2(mois+1)+'-05', montant:10000, note:'Avance semaine 1' });
+  }
+  if(fournisseurs.length === 0){
+    fournisseurs.push({ id:1, nom:'SARL BATIMAT', tel:'+243 800 000 000', archive:false });
+    fournitures = fournitures.concat([
+      { id:1, fournisseurId:1, date:'2025-11-10', produit:'Ciment', unite:'Sac', qte:50, pu:15000, acompte:300000 },
+      { id:2, fournisseurId:1, date:'2025-11-15', produit:'Fer à béton 12', unite:'Barre', qte:100, pu:8000, acompte:200000 }
+    ]);
+  }
+  if(stocks.length === 0){
+    stocks.push({ id:1, produit:'Boîtes email bleu', unite:'Pièce', archive:false });
+    stockInitialData[1] = { qte:17, date:'2025-11-13' };
+    mouvements = mouvements.concat([
+      { id:1, stockId:1, date:'2025-11-14', type:'sortie', qte:4, motif:'' },
+      { id:2, stockId:1, date:'2025-11-20', type:'sortie', qte:5, motif:'' },
+      { id:3, stockId:1, date:'2025-11-22', type:'sortie', qte:4, motif:'' },
+      { id:4, stockId:1, date:'2025-11-23', type:'sortie', qte:4, motif:'' }
+    ]);
+  }
+  sauverTout();
+}
+initDemo();
+
+function afficherPageJ(nom){
+  document.querySelectorAll('#appJournaliers .page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('#appJournaliers .sous-menu button').forEach(function(b){ b.classList.remove('active'); });
+  if(nom==='fiche'){ $('j-pageFiche').classList.add('active'); $('j-navFiche').classList.add('active'); }
+  if(nom==='liste'){ $('j-pageListe').classList.add('active'); $('j-navListe').classList.add('active'); renderListe(); }
+  if(nom==='releve'){ $('j-pageReleve').classList.add('active'); $('j-navReleve').classList.add('active'); remplirSelectReleve(); afficherReleve(); }
+  if(nom==='rapports'){ $('j-pageRapports').classList.add('active'); $('j-navRapports').classList.add('active'); }
+}
+function afficherPageF(nom){
+  document.querySelectorAll('#appFournisseurs .page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('#appFournisseurs .sous-menu button').forEach(function(b){ b.classList.remove('active'); });
+  if(nom==='fiche'){ $('f-pageFiche').classList.add('active'); $('f-navFiche').classList.add('active'); }
+  if(nom==='liste'){ $('f-pageListe').classList.add('active'); $('f-navListe').classList.add('active'); renderListeF(); }
+  if(nom==='releve'){ $('f-pageReleve').classList.add('active'); $('f-navReleve').classList.add('active'); remplirSelectReleveF(); afficherReleveF(); }
+  if(nom==='rapports'){ $('f-pageRapports').classList.add('active'); $('f-navRapports').classList.add('active'); }
+}
+function afficherPageS(nom){
+  document.querySelectorAll('#appStock .page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('#appStock .sous-menu button').forEach(function(b){ b.classList.remove('active'); });
+  if(nom==='fiche'){ $('s-pageFiche').classList.add('active'); $('s-navFiche').classList.add('active'); }
+  if(nom==='depot'){ $('s-pageDepot').classList.add('active'); $('s-navDepot').classList.add('active'); renderDepot(); }
+  if(nom==='rapports'){ $('s-pageRapports').classList.add('active'); $('s-navRapports').classList.add('active'); }
+}
+
+function filtrerSelect(){
+  var q = $('rechercheFiche').value.toLowerCase().trim();
+  var sel = $('selectJournalier');
+  var actifs = journaliers.filter(function(j){
+    if(j.archive) return false;
+    if(!q) return true;
+    return j.nom.toLowerCase().indexOf(q)>=0 || j.tache.toLowerCase().indexOf(q)>=0;
+  });
+  sel.innerHTML = '';
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(j){ var o=document.createElement('option'); o.value=j.id; o.textContent=j.nom+' — '+j.tache; sel.appendChild(o); });
+  chargerFiche();
+}
+
+function filtrerSelectReleve(){
+  var q = $('rechercheReleve').value.toLowerCase().trim();
+  var sel = $('selectReleve');
+  var actifs = journaliers.filter(function(j){
+    if(j.archive) return false;
+    if(!q) return true;
+    return j.nom.toLowerCase().indexOf(q)>=0 || j.tache.toLowerCase().indexOf(q)>=0;
+  });
+  sel.innerHTML = '';
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(j){ var o=document.createElement('option'); o.value=j.id; o.textContent=j.nom+' — '+j.tache; sel.appendChild(o); });
+  afficherReleve();
+}
+
+function remplirSelectJournalier(){
+  var sel = $('selectJournalier'); var courant = sel.value;
+  sel.innerHTML = '';
+  var actifs = journaliers.filter(function(j){ return !j.archive; });
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(j){ var o=document.createElement('option'); o.value=j.id; o.textContent=j.nom+' — '+j.tache; sel.appendChild(o); });
+  if(courant && journaliers.find(function(j){return j.id==courant;})) sel.value=courant;
+  else sel.value = actifs[0].id;
+}
+
+function remplirSelectReleve(){
+  var sel = $('selectReleve'); var courant = sel.value;
+  sel.innerHTML = '';
+  var actifs = journaliers.filter(function(j){ return !j.archive; });
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(j){ var o=document.createElement('option'); o.value=j.id; o.textContent=j.nom+' — '+j.tache; sel.appendChild(o); });
+  if(courant && journaliers.find(function(j){return j.id==courant;})) sel.value=courant;
+  else sel.value = actifs[0].id;
+  $('rMois').value = new Date().getMonth();
+  $('rAnnee').value = new Date().getFullYear();
+}
+
+function calculArrieres(jid, moisActuel, anneeActuelle){
+  var cfg = configs[jid] || { montantJour: 5000 };
+  var arrieres = 0;
+  var tousPoints = pointages.filter(function(p){ return p.journalierId === jid; });
+  if(tousPoints.length === 0) return 0;
+  var datesMois = {};
+  tousPoints.forEach(function(p){
+    var pref = p.date.substring(0,7);
+    if(!datesMois[pref]) datesMois[pref]=0;
+    datesMois[pref] += p.valeur;
+  });
+  var prefActuel = anneeActuelle+'-'+pad2(moisActuel+1);
+  Object.keys(datesMois).forEach(function(pref){
+    if(pref >= prefActuel) return;
+    var jours = datesMois[pref];
+    var montant = jours * cfg.montantJour;
+    var acs = acomptes.filter(function(a){ return a.journalierId===jid && a.date.substring(0,7)===pref; });
+    var tA = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+    var solde = montant - tA;
+    if(solde > 0) arrieres += solde;
+  });
+  return arrieres;
+}
+
+function chargerFiche(){
+  var jid = parseInt($('selectJournalier').value);
+  var j = journaliers.find(function(x){return x.id===jid;});
+  if(!j){
+    $('infoNom').textContent='—'; $('infoTache').textContent='—';
+    $('theadPointage').innerHTML=''; $('corpsPointage').innerHTML=''; $('tfootPointage').innerHTML='';
+    return;
+  }
+  $('infoNom').textContent = j.nom;
+  $('infoTache').textContent = j.tache;
+
+  var cfg = configs[jid] || { montantJour: 5000 };
+  if(document.activeElement !== $('pMontantJour')){
+    $('pMontantJour').value = cfg.montantJour;
+  }
+
+  var mois = parseInt($('pMois').value);
+  var annee = parseInt($('pAnnee').value);
+  var nomsJours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  var nbJours = new Date(annee, mois+1, 0).getDate();
+
+  var thead = '<tr><th style="min-width:110px;">JOURNALIER</th><th style="min-width:80px;">TÂCHE</th>';
+  for(var d=1; d<=nbJours; d++){
+    var dateObj = new Date(annee, mois, d);
+    var js = dateObj.getDay();
+    var wk = (js===0 || js===6) ? ' weekend' : '';
+    thead += '<th class="'+wk+'">'+nomsJours[js].charAt(0)+'<br>'+d+'</th>';
+  }
+  thead += '<th style="min-width:50px;">TOTAL<br>JOURS</th><th style="min-width:70px;">MONTANT<br>('+symboleDevise()+')</th><th style="min-width:70px;">SOLDE<br>('+symboleDevise()+')</th></tr>';
+  $('theadPointage').innerHTML = thead;
+
+  var tbody = '<tr><td class="nom-cell">'+j.nom+'</td><td class="tache-cell">'+j.tache+'</td>';
+  var totalJours = 0;
+  for(var d=1; d<=nbJours; d++){
+    var dateStr = annee+'-'+pad2(mois+1)+'-'+pad2(d);
+    var p = pointages.find(function(x){ return x.journalierId===jid && x.date===dateStr; });
+    var val = (p && p.valeur !== undefined && p.valeur !== null) ? p.valeur : '';
+    if(p) totalJours += p.valeur;
+    tbody += '<td><input type="number" step="0.5" min="0" max="1" value="'+val+'" onchange="setPointage(\''+dateStr+'\', this.value)"></td>';
+  }
+  var mj = parseFloat($('pMontantJour').value) || 0;
+  var montantMois = totalJours * mj;
+  var acs = acomptes.filter(function(a){ return a.journalierId===jid && a.date.substring(0,7)===annee+'-'+pad2(mois+1); });
+  var tAcomptes = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+  var soldeMois = montantMois - tAcomptes;
+  var arrieres = calculArrieres(jid, mois, annee);
+  var totalDu = arrieres + soldeMois;
+
+  tbody += '<td class="total-cell">'+fmt(totalJours)+'</td><td class="montant-cell">'+fmt(montantMois)+'</td><td class="solde-cell">'+fmt(soldeMois)+'</td></tr>';
+  $('corpsPointage').innerHTML = tbody;
+
+  $('tfootPointage').innerHTML = '<tr class="total"><td colspan="2">TOTAL</td><td colspan="'+nbJours+'"></td>'+
+    '<td class="total-total">'+fmt(totalJours)+'</td><td class="total-montant">'+fmt(montantMois)+'</td><td class="total-solde">'+fmt(soldeMois)+'</td></tr>';
+
+  $('resumeMontant').textContent = mt(montantMois);
+  $('resumeAcompte').textContent = mt(tAcomptes);
+  $('resumeSolde').textContent = mt(soldeMois);
+  $('resumeArrieres').textContent = mt(arrieres);
+  $('resumeStatut').textContent = mt(totalDu);
+  $('observation').value = obsJ[jid] || '';
+}
+
+function setPointage(dateStr, valeur){
+  var jid = parseInt($('selectJournalier').value); if(!jid) return;
+  var v = parseFloat(valeur); if(isNaN(v)) v=0;
+  if(v>1) v=1; if(v<0) v=0;
+  var ms = parseFloat($('pMontantJour').value);
+  if(!isNaN(ms) && ms>=0) configs[jid] = { montantJour: ms };
+  var idx = -1;
+  for(var i=0;i<pointages.length;i++){ if(pointages[i].journalierId===jid && pointages[i].date===dateStr){ idx=i; break; } }
+  if(v===0){ if(idx>=0) pointages.splice(idx,1); }
+  else {
+    if(idx>=0) pointages[idx].valeur = v;
+    else pointages.push({ id: Date.now()+Math.random(), journalierId:jid, date:dateStr, valeur:v });
+  }
+  sauverTout(); chargerFiche();
+}
+
+function sauverMontantJour(){
+  var jid = parseInt($('selectJournalier').value); if(!jid) return;
+  var m = parseFloat($('pMontantJour').value);
+  if(isNaN(m) || m<0){ alert('Montant invalide'); return; }
+  configs[jid] = { montantJour: m };
+  sauverTout(); chargerFiche();
+  msg('msgF','✅ Tarif enregistré : '+mt(m)+'/jour', true);
+}
+
+function ouvrirModalNouveauJournalier(){
+  $('modalContent').innerHTML = '<h3>➕ Nouveau journalier</h3>'+
+    '<label>Nom complet *</label><input id="njNom">'+
+    '<label>Tâche *</label><input id="njTache">'+
+    '<label>Téléphone</label><input type="tel" id="njTel">'+
+    '<label>Montant / jour ('+symboleDevise()+')</label><input type="number" id="njMontant" value="5000" min="0" step="100">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerNouveauJournalier()">Créer</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerNouveauJournalier(){
+  var nom = $('njNom').value.trim(), tache = $('njTache').value.trim();
+  if(!nom){ alert('Nom requis'); return; }
+  if(!tache){ alert('Tâche requise'); return; }
+  var id = Date.now();
+  journaliers.push({ id:id, nom:nom, tache:tache, tel:$('njTel').value.trim(), archive:false });
+  configs[id] = { montantJour: parseFloat($('njMontant').value)||5000 };
+  sauverTout(); fermerModal();
+  remplirSelectJournalier(); remplirSelectReleve();
+  $('selectJournalier').value = id; chargerFiche();
+}
+
+function ouvrirModalAcomptes(){
+  var jid = parseInt($('selectJournalier').value); if(!jid){ alert('Sélectionnez un journalier'); return; }
+  var j = journaliers.find(function(x){return x.id===jid;});
+  var mois = parseInt($('pMois').value), annee = parseInt($('pAnnee').value);
+  var prefixe = annee+'-'+pad2(mois+1);
+  var listeAcs = acomptes.filter(function(a){ return a.journalierId===jid && a.date.substring(0,7)===prefixe; })
+                          .sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var html = '<h3>💰 Acomptes de '+j.nom+'</h3>';
+  html += '<p style="font-size:11px;color:#666;margin-bottom:8px;">Mois : <b>'+prefixe+'</b> · Devise : <b>'+symboleDevise()+'</b></p>';
+  html += '<label>Date</label><input type="date" id="acDate" value="'+new Date().toISOString().slice(0,10)+'">';
+  html += '<label>Montant ('+symboleDevise()+')</label><input type="number" id="acMontant" value="0" min="0" step="100">';
+  html += '<label>Note</label><input type="text" id="acNote">';
+  html += '<div style="margin-top:10px;"><button class="btn vert" onclick="ajouterAcompte('+jid+')" style="width:100%;">➕ Ajouter</button></div>';
+  html += '<h3 style="margin-top:20px;">Historique</h3>';
+  if(listeAcs.length===0) html += '<p style="font-size:12px;color:#888;">Aucun acompte ce mois.</p>';
+  else {
+    listeAcs.forEach(function(a){
+      html += '<div class="acompte-ligne"><span><b>'+formaterDate(a.date)+'</b> — '+mt(a.montant)+(a.note?'<br><small>'+a.note+'</small>':'')+'</span>'+
+        '<button class="btn small rouge" onclick="supprimerAcompte('+a.id+')">🗑️</button></div>';
+    });
+    var tot = listeAcs.reduce(function(s,a){ return s+a.montant; }, 0);
+    html += '<div style="margin-top:10px;font-weight:bold;color:#1e3a5f;">Total : '+mt(tot)+'</div>';
+  }
+  html += '<div style="margin-top:15px;"><button class="btn gris" onclick="fermerModal()" style="width:100%;">Fermer</button></div>';
+  $('modalContent').innerHTML = html;
+  $('modal').classList.add('active');
+}
+function ajouterAcompte(jid){
+  var date = $('acDate').value, montant = parseFloat($('acMontant').value)||0, note = $('acNote').value.trim();
+  if(!date){ alert('Date requise'); return; }
+  if(montant<=0){ alert('Montant invalide'); return; }
+  acomptes.push({ id:Date.now(), journalierId:jid, date:date, montant:montant, note:note });
+  sauverTout(); ouvrirModalAcomptes(); chargerFiche(); renderListe();
+}
+function supprimerAcompte(id){
+  if(!confirm('Supprimer ?')) return;
+  acomptes = acomptes.filter(function(a){ return a.id!==id; });
+  sauverTout(); ouvrirModalAcomptes(); chargerFiche(); renderListe();
+}
+
+function supprimerJournalierFiche(){
+  var jid = parseInt($('selectJournalier').value); if(!jid) return;
+  var j = journaliers.find(function(x){return x.id===jid;});
+  if(!confirm('Supprimer "'+j.nom+'" ?')) return;
+  j.archive = true; sauverTout(); remplirSelectJournalier(); chargerFiche();
+}
+
+function ajouterJournalierListe(){
+  var nom = $('pNom').value.trim(), tache = $('pTache').value.trim();
+  if(!nom || !tache){ msg('msgP','Nom et tâche requis', false); return; }
+  var id = Date.now(), tarif = parseFloat($('pMontantInit').value)||5000;
+  journaliers.push({ id:id, nom:nom, tache:tache, tel:$('pTel').value.trim(), archive:false });
+  configs[id] = { montantJour: tarif };
+  sauverTout();
+  $('pNom').value=''; $('pTache').value=''; $('pTel').value=''; $('pMontantInit').value=5000;
+  msg('msgP','✅ Ajouté', true);
+  renderListe(); remplirSelectJournalier(); remplirSelectReleve();
+}
+
+function renderListe(){
+  var tb = $('corpsListe'); tb.innerHTML = '';
+  var q = ($('rechercheListe').value||'').toLowerCase().trim();
+  var actifs = journaliers.filter(function(j){
+    if(j.archive) return false;
+    if(!q) return true;
+    return j.nom.toLowerCase().indexOf(q)>=0 || j.tache.toLowerCase().indexOf(q)>=0;
+  });
+  if(actifs.length===0){ tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#888;">Aucun</td></tr>'; $('totauxListe').innerHTML=''; return; }
+  var mois = parseInt($('pMois').value), annee = parseInt($('pAnnee').value);
+  var prefixe = annee+'-'+pad2(mois+1)+'-';
+  var gJ=0,gM=0,gA=0,gS=0,gArr=0,gT=0;
+  actifs.forEach(function(j){
+    var cfg = configs[j.id] || { montantJour:5000 };
+    var pts = pointages.filter(function(p){ return p.journalierId===j.id && p.date.indexOf(prefixe)===0; });
+    var jours = pts.reduce(function(s,p){ return s+p.valeur; }, 0);
+    var montant = jours * cfg.montantJour;
+    var acs = acomptes.filter(function(a){ return a.journalierId===j.id && a.date.substring(0,7)===annee+'-'+pad2(mois+1); });
+    var tA = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+    var solde = montant - tA;
+    var arr = calculArrieres(j.id, mois, annee);
+    var td = arr + solde;
+    gJ+=jours; gM+=montant; gA+=tA; gS+=solde; gArr+=arr; gT+=td;
+    var etat = (montant===0 && arr===0) ? '<span class="badge impaye">Rien</span>' :
+               (td<=0 ? '<span class="badge ok">Payé</span>' :
+               (tA>0 ? '<span class="badge partiel">Partiel</span>' : '<span class="badge impaye">Impayé</span>'));
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+j.nom+'</td><td>'+j.tache+'</td><td>'+(j.tel||'—')+'</td><td>'+mt(cfg.montantJour)+'</td>'+
+      '<td>'+fmt(jours)+'</td><td>'+fmt(montant)+'</td><td>'+fmt(tA)+'</td><td>'+fmt(solde)+'</td>'+
+      '<td style="background:#ffe600;font-weight:bold;">'+fmt(arr)+'</td>'+
+      '<td style="background:#e30613;color:#fff;font-weight:bold;">'+fmt(td)+'</td>'+
+      '<td>'+etat+'</td>'+
+      '<td class="no-print" style="white-space:nowrap;">'+
+        '<button class="btn small bleu" onclick="voirFicheJournalier('+j.id+')">👁️</button> '+
+        '<button class="btn small violet" onclick="acompteDepuisListe('+j.id+')">💰</button> '+
+        '<button class="btn small orange" onclick="modifierJournalierListe('+j.id+')">✏️</button> '+
+        '<button class="btn small rouge" onclick="supprimerJournalierListe('+j.id+')">🗑️</button></td>';
+    tb.appendChild(tr);
+  });
+  $('totauxListe').innerHTML = '<div>Journaliers : '+actifs.length+'</div><div>Jours : '+fmt(gJ)+'</div>'+
+    '<div>Montant : '+mt(gM)+'</div><div>Acomptes : '+mt(gA)+'</div>'+
+    '<div>Solde mois : '+mt(gS)+'</div><div>Arriérés : '+mt(gArr)+'</div>'+
+    '<div style="background:#e30613;color:#fff;">Total dû : '+mt(gT)+'</div>';
+}
+function acompteDepuisListe(id){ $('selectJournalier').value = id; ouvrirModalAcomptes(); }
+function voirFicheJournalier(id){ remplirSelectJournalier(); $('selectJournalier').value = id; afficherPageJ('fiche'); chargerFiche(); }
+
+function modifierJournalierListe(id){
+  var j = journaliers.find(function(x){ return x.id===id; });
+  var cfg = configs[id] || { montantJour:5000 };
+  $('modalContent').innerHTML = '<h3>✏️ Modifier</h3>'+
+    '<label>Nom *</label><input id="mjNom" value="'+j.nom+'">'+
+    '<label>Tâche *</label><input id="mjTache" value="'+j.tache+'">'+
+    '<label>Téléphone</label><input type="tel" id="mjTel" value="'+(j.tel||'')+'">'+
+    '<label>Montant / jour ('+symboleDevise()+')</label><input type="number" id="mjMontant" value="'+cfg.montantJour+'" min="0" step="100">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerModifJournalier('+id+')">💾 Enregistrer</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerModifJournalier(id){
+  var j = journaliers.find(function(x){ return x.id===id; });
+  var nom = $('mjNom').value.trim(), tache = $('mjTache').value.trim();
+  if(!nom || !tache){ alert('Nom et tâche requis'); return; }
+  j.nom = nom; j.tache = tache; j.tel = $('mjTel').value.trim();
+  configs[id] = { montantJour: parseFloat($('mjMontant').value)||0 };
+  sauverTout(); fermerModal(); renderListe();
+  remplirSelectJournalier(); remplirSelectReleve(); chargerFiche();
+}
+function supprimerJournalierListe(id){
+  var j = journaliers.find(function(x){return x.id===id;});
+  if(!confirm('Supprimer "'+j.nom+'" ?')) return;
+  j.archive = true; sauverTout(); renderListe(); remplirSelectJournalier(); remplirSelectReleve(); chargerFiche();
+}
+
+function afficherReleve(){
+  var jid = parseInt($('selectReleve').value);
+  var zone = $('zoneReleve');
+  if(!jid){ zone.innerHTML = '<p style="color:#888;">Aucun journalier.</p>'; return; }
+  var j = journaliers.find(function(x){ return x.id===jid; });
+  var mois = parseInt($('rMois').value), annee = parseInt($('rAnnee').value);
+  var nomsMois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var nomsJours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  var nbJours = new Date(annee, mois+1, 0).getDate();
+  var cfg = configs[jid] || { montantJour:5000 };
+  var totalJours = 0;
+  var html = '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RELEVÉ DE POINTAGE</div>';
+  html += '<div class="section-titre">'+j.nom+' — '+j.tache+' — '+nomsMois[mois]+' '+annee+' — Tarif : '+mt(cfg.montantJour)+'/jour</div>';
+  html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+    '<th>Date</th><th>Jour</th><th>Pointage</th><th>Montant</th><th>Observation</th></tr></thead><tbody>';
+  for(var d=1; d<=nbJours; d++){
+    var dateObj = new Date(annee, mois, d);
+    var js = dateObj.getDay();
+    var dateStr = annee+'-'+pad2(mois+1)+'-'+pad2(d);
+    var p = pointages.find(function(x){ return x.journalierId===jid && x.date===dateStr; });
+    var v = p ? p.valeur : 0;
+    if(p) totalJours += v;
+    var m = v * cfg.montantJour;
+    var wk = (js===0 || js===6);
+    var st = v===1?'background:#c6f6d5;':(v===0.5?'background:#fefcbf;':'background:#fed7d7;color:#822727;');
+    var label = v===1?'Présent':(v===0.5?'Demi-journée':'Absent');
+    html += '<tr style="'+st+'"><td>'+pad2(d)+'/'+pad2(mois+1)+'/'+annee+'</td>'+
+      '<td>'+nomsJours[js]+(wk?' ⚠️':'')+'</td><td><b>'+v+'</b> ('+label+')</td>'+
+      '<td>'+mt(m)+'</td><td>'+(p && p.note ? p.note : '—')+'</td></tr>';
+  }
+  html += '</tbody><tfoot><tr style="background:#a00000;color:#fff;font-weight:bold;"><td colspan="2">TOTAL</td>'+
+    '<td>'+fmt(totalJours)+' jours</td><td>'+mt(totalJours*cfg.montantJour)+'</td><td></td></tr></tfoot></table></div>';
+  zone.innerHTML = html;
+}
+
+function afficherRapportJ(type){
+  var zone = $('zoneRapport');
+  var mois = parseInt($('pMois').value), annee = parseInt($('pAnnee').value);
+  var nomsMois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var prefixe = annee+'-'+pad2(mois+1)+'-';
+  var html = '';
+  if(type==='global'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT GLOBAL — '+nomsMois[mois]+' '+annee+'</div>';
+    html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+      '<th>Journalier</th><th>Tâche</th><th>Tarif/j</th><th>Jours</th><th>Montant</th><th>Acomptes</th><th>Solde mois</th><th>Arriérés</th><th>Total dû</th>'+
+      '</tr></thead><tbody>';
+    var nb=0,gJ=0,gM=0,gA=0,gS=0,gArr=0,gT=0;
+    journaliers.filter(function(j){return !j.archive;}).forEach(function(j){
+      nb++;
+      var cfg = configs[j.id] || { montantJour:5000 };
+      var pts = pointages.filter(function(p){ return p.journalierId===j.id && p.date.indexOf(prefixe)===0; });
+      var jours = pts.reduce(function(s,p){ return s+p.valeur; }, 0);
+      var montant = jours * cfg.montantJour;
+      var acs = acomptes.filter(function(a){ return a.journalierId===j.id && a.date.substring(0,7)===annee+'-'+pad2(mois+1); });
+      var tA = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+      var solde = montant - tA;
+      var arr = calculArrieres(j.id, mois, annee);
+      var td = arr + solde;
+      gJ+=jours; gM+=montant; gA+=tA; gS+=solde; gArr+=arr; gT+=td;
+      html += '<tr><td>'+j.nom+'</td><td>'+j.tache+'</td><td>'+mt(cfg.montantJour)+'</td><td>'+fmt(jours)+'</td><td>'+fmt(montant)+'</td><td>'+fmt(tA)+'</td><td>'+fmt(solde)+'</td><td style="background:#ffe600;">'+fmt(arr)+'</td><td style="background:#e30613;color:#fff;"><b>'+fmt(td)+'</b></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="totaux" style="margin-top:15px;">'+
+      '<div>Journaliers : '+nb+'</div><div>Jours : '+fmt(gJ)+'</div><div>Montant : '+mt(gM)+'</div>'+
+      '<div>Acomptes : '+mt(gA)+'</div><div>Solde : '+mt(gS)+'</div><div>Arriérés : '+mt(gArr)+'</div>'+
+      '<div style="background:#e30613;color:#fff;">Total dû : '+mt(gT)+'</div></div>';
+  }
+  else if(type==='detail'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT DÉTAILLÉ — '+nomsMois[mois]+' '+annee+'</div>';
+    journaliers.filter(function(j){return !j.archive;}).forEach(function(j){
+      var cfg = configs[j.id] || { montantJour:5000 };
+      var pts = pointages.filter(function(p){ return p.journalierId===j.id && p.date.indexOf(prefixe)===0; });
+      var jours = pts.reduce(function(s,p){ return s+p.valeur; }, 0);
+      var montant = jours * cfg.montantJour;
+      var acs = acomptes.filter(function(a){ return a.journalierId===j.id && a.date.substring(0,7)===annee+'-'+pad2(mois+1); });
+      var tA = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+      var solde = montant - tA;
+      var arr = calculArrieres(j.id, mois, annee);
+      html += '<div style="margin-top:18px;"><div class="section-titre">'+j.nom+' — '+j.tache+' — Tél : '+(j.tel||'—')+'</div>';
+      html += '<div class="scroll-x"><table class="pointage"><thead><tr>'+
+        '<th>JOURS</th><th>TARIF/J</th><th>MONTANT MOIS</th><th>ACOMPTES</th><th>SOLDE MOIS</th><th>ARRIÉRÉS</th><th>TOTAL DÛ</th>'+
+        '</tr></thead><tbody><tr><td style="background:#00c000;font-weight:bold;">'+fmt(jours)+'</td>'+
+        '<td>'+mt(cfg.montantJour)+'</td><td style="background:#ffe600;font-weight:bold;">'+fmt(montant)+'</td>'+
+        '<td style="background:#00c000;">'+fmt(tA)+'</td><td style="background:#e30613;color:#fff;">'+fmt(solde)+'</td>'+
+        '<td style="background:#ffe600;">'+fmt(arr)+'</td><td style="background:#a00000;color:#fff;font-weight:bold;">'+fmt(arr+solde)+'</td>'+
+        '</tr></tbody></table></div></div>';
+    });
+  }
+  else if(type==='arrieres'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT ARRIÉRÉS</div>';
+    html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+      '<th>Journalier</th><th>Mois</th><th>Tarif/j</th><th>Jours</th><th>Montant</th><th>Acomptes</th><th>Solde dû</th>'+
+      '</tr></thead><tbody>';
+    var gT = 0;
+    journaliers.filter(function(j){return !j.archive;}).forEach(function(j){
+      var cfg = configs[j.id] || { montantJour:5000 };
+      var tousPts = pointages.filter(function(p){ return p.journalierId===j.id; });
+      var datesMois = {};
+      tousPts.forEach(function(p){ var pf = p.date.substring(0,7); if(!datesMois[pf]) datesMois[pf]=0; datesMois[pf]+=p.valeur; });
+      Object.keys(datesMois).sort().forEach(function(pf){
+        var jours = datesMois[pf];
+        var montant = jours * cfg.montantJour;
+        var acs = acomptes.filter(function(a){ return a.journalierId===j.id && a.date.substring(0,7)===pf; });
+        var tA = acs.reduce(function(s,a){ return s+a.montant; }, 0);
+        var solde = montant - tA;
+        if(solde > 0){
+          gT += solde;
+          html += '<tr><td>'+j.nom+'</td><td>'+pf+'</td><td>'+mt(cfg.montantJour)+'</td>'+
+            '<td>'+fmt(jours)+'</td><td>'+fmt(montant)+'</td><td>'+fmt(tA)+'</td>'+
+            '<td style="background:#e30613;color:#fff;font-weight:bold;">'+fmt(solde)+'</td></tr>';
+        }
+      });
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="totaux" style="margin-top:15px;"><div style="background:#e30613;color:#fff;font-size:14px;">TOTAL ARRIÉRÉS : '+mt(gT)+'</div></div>';
+  }
+  zone.innerHTML = html;
+}
+
+function envoyerWhatsAppJ(){
+  var j = journaliers.find(function(x){ return x.id===parseInt($('selectJournalier').value); });
+  if(!j) return;
+  var t = '*FICHE JOURNALIER*\n\n*Nom :* '+j.nom+'\n*Tâche :* '+j.tache+
+    '\n*Tarif/jour :* '+$('pMontantJour').value+' '+symboleDevise()+'\n\n*Montant du mois :* '+$('resumeMontant').textContent+
+    '\n*Acomptes :* '+$('resumeAcompte').textContent+'\n*Solde :* '+$('resumeSolde').textContent+
+    '\n*Arriérés :* '+$('resumeArrieres').textContent+'\n*TOTAL :* '+$('resumeStatut').textContent;
+  window.open('https://wa.me/?text='+encodeURIComponent(t), '_blank');
+}
+function envoyerRapportWhatsAppJ(){
+  var c = $('zoneRapport').innerText;
+  if(!c){ alert('Générez un rapport'); return; }
+  window.open('https://wa.me/?text='+encodeURIComponent(c), '_blank');
+}
+function exporterWordJ(){
+  var c = $('zoneFiche').cloneNode(true);
+  c.querySelectorAll('.no-print').forEach(function(e){ e.remove(); });
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>'+
+    'body{font-family:Arial;} .titre-principal{background:#e30613;color:#fff;text-align:center;font-weight:bold;font-size:20px;padding:8px;border:3px solid #000;}'+
+    '.section-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;} .ligne-info{display:table;width:100%;border:3px solid #000;}'+
+    '.ligne-info > div{display:table-cell;width:50%;padding:8px;font-weight:bold;text-align:center;border-right:3px solid #000;}'+
+    '.cell-info.bleu{background:#0000ff;color:#fff;} .cell-info.blanc{background:#fff;}'+
+    'table.pointage{width:100%;border-collapse:collapse;border:3px solid #000;font-size:10px;}'+
+    'table.pointage th,table.pointage td{border:2px solid #000;padding:4px;text-align:center;}'+
+    'table.pointage th{background:#1e3a5f;color:#fff;}'+
+    'table.resume{width:100%;border-collapse:collapse;border:3px solid #000;}'+
+    'table.resume td{border:2px solid #000;padding:8px;font-weight:bold;text-align:center;}'+
+    '.obs-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;}'+
+    '.obs-zone{border:3px solid #000;padding:10px;}</style></head><body>'+c.innerHTML+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fiche_journalier.doc'; a.click();
+}
+function exporterRapportWordJ(){
+  var c = $('zoneRapport').innerHTML;
+  if(!c){ alert('Générez un rapport'); return; }
+  var html = '<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:12px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:5px;}th{background:#1e3a5f;color:#fff;}.titre-principal{background:#1e3a5f;color:#fff;padding:8px;text-align:center;font-weight:bold;}.section-titre{background:#ffe600;font-weight:bold;padding:4px 10px;border:2px solid #000;}.totaux div{background:#edf2f7;padding:6px 10px;display:inline-block;margin:4px;}</style></head><body>'+c+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rapport_journaliers.doc'; a.click();
+}
+function sauvegarderObservation(){
+  var jid = parseInt($('selectJournalier').value); if(!jid) return;
+  obsJ[jid] = $('observation').value;
+  var m = parseFloat($('pMontantJour').value);
+  if(!isNaN(m) && m>=0) configs[jid] = { montantJour: m };
+  sauverTout();
+  alert('Observation et tarif sauvegardés ✅');
+}
+
+function filtrerSelectFournisseur(){
+  var q = $('rechercheFournisseur').value.toLowerCase().trim();
+  var sel = $('selectFournisseur');
+  var actifs = fournisseurs.filter(function(f){
+    if(f.archive) return false;
+    if(!q) return true;
+    return f.nom.toLowerCase().indexOf(q)>=0;
+  });
+  sel.innerHTML = '';
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(f){ var o=document.createElement('option'); o.value=f.id; o.textContent=f.nom+(f.tel?' — '+f.tel:''); sel.appendChild(o); });
+  chargerFicheF();
+}
+
+function filtrerSelectReleveF(){
+  var q = $('rechercheReleveF').value.toLowerCase().trim();
+  var sel = $('selectReleveF');
+  var actifs = fournisseurs.filter(function(f){
+    if(f.archive) return false;
+    if(!q) return true;
+    return f.nom.toLowerCase().indexOf(q)>=0;
+  });
+  sel.innerHTML = '';
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(f){ var o=document.createElement('option'); o.value=f.id; o.textContent=f.nom+(f.tel?' — '+f.tel:''); sel.appendChild(o); });
+  afficherReleveF();
+}
+
+function remplirSelectFournisseur(){
+  var sel = $('selectFournisseur'); var courant = sel.value;
+  sel.innerHTML = '';
+  var actifs = fournisseurs.filter(function(f){ return !f.archive; });
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(f){ var o=document.createElement('option'); o.value=f.id; o.textContent=f.nom+(f.tel?' — '+f.tel:''); sel.appendChild(o); });
+  if(courant && fournisseurs.find(function(f){return f.id==courant;})) sel.value=courant;
+  else sel.value = actifs[0].id;
+}
+
+function remplirSelectReleveF(){
+  var sel = $('selectReleveF'); var courant = sel.value;
+  sel.innerHTML = '';
+  var actifs = fournisseurs.filter(function(f){ return !f.archive; });
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(f){ var o=document.createElement('option'); o.value=f.id; o.textContent=f.nom+(f.tel?' — '+f.tel:''); sel.appendChild(o); });
+  if(courant && fournisseurs.find(function(f){return f.id==courant;})) sel.value=courant;
+  else sel.value = actifs[0].id;
+  $('rMoisF').value = new Date().getMonth();
+  $('rAnneeF').value = new Date().getFullYear();
+}
+
+function chargerFicheF(){
+  var fid = parseInt($('selectFournisseur').value);
+  var f = fournisseurs.find(function(x){ return x.id===fid; });
+  if(!f){
+    $('infoFNom').textContent='—'; $('infoFTel').textContent='—';
+    $('corpsFournitures').innerHTML=''; $('fTotalTotal').textContent='0';
+    $('fTotalAcompte').textContent='0'; $('fTotalSolde').textContent='0';
+    $('fResumeTotal').textContent='0'; $('fResumeAcompte').textContent='0'; $('fResumeSolde').textContent='0';
+    return;
+  }
+  $('infoFNom').textContent = f.nom;
+  $('infoFTel').textContent = f.tel || '—';
+
+  var fours = fournitures.filter(function(x){ return x.fournisseurId===fid; });
+  fours.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var MIN = 10, lignes = [], tT=0, tA=0, tS=0;
+
+  fours.forEach(function(x){
+    var total = x.qte * x.pu;
+    var solde = total - x.acompte;
+    tT += total; tA += x.acompte; tS += solde;
+    lignes.push({ id:x.id, date:x.date, produit:x.produit, unite:x.unite, qte:x.qte, pu:x.pu, total:total, acompte:x.acompte, solde:solde });
+  });
+  while(lignes.length < MIN) lignes.push({ id:null, date:'', produit:'', unite:'', qte:'', pu:'', total:'', acompte:'', solde:'' });
+
+  var html = '';
+  lignes.forEach(function(l){
+    html += '<tr><td>'+(l.date?formaterDate(l.date):'')+'</td><td>'+(l.produit||'')+'</td><td>'+(l.unite||'')+'</td>'+
+      '<td>'+(l.qte!==''?fmt(l.qte):'')+'</td><td>'+(l.pu!==''?fmt(l.pu):'')+'</td>'+
+      '<td class="col-total">'+(l.total!==''?fmt(l.total):'')+'</td>'+
+      '<td class="col-acompte">'+(l.acompte!==''?fmt(l.acompte):'')+'</td>'+
+      '<td class="col-solde">'+(l.solde!==''?fmt(l.solde):'')+'</td>'+
+      '<td class="no-print" style="padding:2px;">'+
+        (l.id ? '<button class="btn small bleu" onclick="modifierFourniture('+l.id+')">✏️</button> '+
+                '<button class="btn small rouge" onclick="supprimerFourniture('+l.id+')">🗑️</button>' : '')+
+      '</td></tr>';
+  });
+  $('corpsFournitures').innerHTML = html;
+  $('fTotalTotal').textContent = fmt(tT);
+  $('fTotalAcompte').textContent = fmt(tA);
+  $('fTotalSolde').textContent = fmt(tS);
+  $('fResumeTotal').textContent = mt(tT);
+  $('fResumeAcompte').textContent = mt(tA);
+  $('fResumeSolde').textContent = mt(tS);
+  $('fObservation').value = obsF[fid] || '';
+}
+
+function ajouterFourniture(){
+  var fid = parseInt($('selectFournisseur').value); if(!fid) return;
+  var date = $('fDate').value;
+  var produit = $('fProduit').value.trim();
+  var unite = $('fUnite').value;
+  var qte = parseFloat($('fQte').value);
+  var pu = parseFloat($('fPU').value);
+  var acompte = parseFloat($('fAcompte').value) || 0;
+  if(!date || !produit || !qte || qte<=0 || !pu || pu<=0){ msg('msgFF','Champs invalides', false); return; }
+  fournitures.push({ id:Date.now(), fournisseurId:fid, date:date, produit:produit, unite:unite, qte:qte, pu:pu, acompte:acompte });
+  entrerStockAuto(produit, unite, qte, pu, 'Fournisseur '+(fournisseurs.find(function(x){return x.id===fid;}).nom));
+  sauverTout();
+  $('fProduit').value=''; $('fQte').value=1; $('fPU').value=0; $('fAcompte').value=0;
+  msg('msgFF','✅ Ajouté + stock mis à jour', true);
+  chargerFicheF(); renderListeF();
+}
+
+function modifierFourniture(id){
+  var x = fournitures.find(function(y){ return y.id===id; });
+  $('modalContent').innerHTML = '<h3>✏️ Modifier</h3>'+
+    '<label>Date</label><input type="date" id="efDate" value="'+x.date+'">'+
+    '<label>Produit</label><input id="efProduit" value="'+x.produit+'">'+
+    '<label>Unité</label><select id="efUnite">'+['Pièce','Sac','Kg','m³','Litre','Barre'].map(function(u){return '<option '+(x.unite===u?'selected':'')+'>'+u+'</option>';}).join('')+'</select>'+
+    '<label>Quantité</label><input type="number" id="efQte" value="'+x.qte+'" min="0" step="0.01">'+
+    '<label>Prix unitaire</label><input type="number" id="efPU" value="'+x.pu+'" min="0" step="0.01">'+
+    '<label>Acompte</label><input type="number" id="efAcompte" value="'+x.acompte+'" min="0" step="0.01">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerFourniture('+id+')">Valider</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerFourniture(id){
+  var x = fournitures.find(function(y){ return y.id===id; });
+  x.date = $('efDate').value; x.produit = $('efProduit').value.trim(); x.unite = $('efUnite').value;
+  x.qte = parseFloat($('efQte').value)||0; x.pu = parseFloat($('efPU').value)||0; x.acompte = parseFloat($('efAcompte').value)||0;
+  sauverTout(); fermerModal(); chargerFicheF(); renderListeF();
+}
+function supprimerFourniture(id){
+  if(!confirm('Supprimer ?')) return;
+  fournitures = fournitures.filter(function(x){ return x.id!==id; });
+  sauverTout(); chargerFicheF(); renderListeF();
+}
+
+function ouvrirModalNouveauFournisseur(){
+  $('modalContent').innerHTML = '<h3>➕ Nouveau fournisseur</h3>'+
+    '<label>Nom *</label><input id="nfNom">'+
+    '<label>Téléphone</label><input type="tel" id="nfTel">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerNouveauFournisseur()">Créer</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerNouveauFournisseur(){
+  var nom = $('nfNom').value.trim();
+  if(!nom){ alert('Nom requis'); return; }
+  var id = Date.now();
+  fournisseurs.push({ id:id, nom:nom, tel:$('nfTel').value.trim(), archive:false });
+  sauverTout(); fermerModal();
+  remplirSelectFournisseur(); remplirSelectReleveF();
+  $('selectFournisseur').value = id; chargerFicheF();
+}
+
+function supprimerFournisseurFiche(){
+  var fid = parseInt($('selectFournisseur').value); if(!fid) return;
+  var f = fournisseurs.find(function(x){return x.id===fid;});
+  if(!confirm('Supprimer "'+f.nom+'" ?')) return;
+  f.archive = true; sauverTout(); remplirSelectFournisseur(); chargerFicheF();
+}
+
+function ajouterFournisseurListe(){
+  var nom = $('fNomInit').value.trim();
+  if(!nom){ msg('msgFP','Nom requis', false); return; }
+  var id = Date.now();
+  fournisseurs.push({ id:id, nom:nom, tel:$('fTelInit').value.trim(), archive:false });
+  sauverTout();
+  $('fNomInit').value=''; $('fTelInit').value='';
+  msg('msgFP','✅ Ajouté', true);
+  renderListeF(); remplirSelectFournisseur(); remplirSelectReleveF();
+}
+
+function renderListeF(){
+  var tb = $('corpsListeF'); tb.innerHTML = '';
+  var q = ($('rechercheListeF').value||'').toLowerCase().trim();
+  var actifs = fournisseurs.filter(function(f){
+    if(f.archive) return false;
+    if(!q) return true;
+    return f.nom.toLowerCase().indexOf(q)>=0;
+  });
+  if(actifs.length===0){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#888;">Aucun</td></tr>'; $('totauxListeF').innerHTML=''; return; }
+  var gT=0, gA=0, gS=0;
+  actifs.forEach(function(f){
+    var fours = fournitures.filter(function(x){ return x.fournisseurId===f.id; });
+    var tot=0, ac=0;
+    fours.forEach(function(x){ tot += x.qte*x.pu; ac += x.acompte; });
+    var solde = tot - ac;
+    gT+=tot; gA+=ac; gS+=solde;
+    var etat = (solde<=0 && tot>0) ? '<span class="badge ok">Payé</span>' :
+               (ac>0 ? '<span class="badge partiel">Partiel</span>' : '<span class="badge impaye">Impayé</span>');
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+f.nom+'</td><td>'+(f.tel||'—')+'</td><td>'+fours.length+'</td>'+
+      '<td>'+fmt(tot)+'</td><td>'+fmt(ac)+'</td><td><b>'+fmt(solde)+'</b></td><td>'+etat+'</td>'+
+      '<td class="no-print" style="white-space:nowrap;">'+
+        '<button class="btn small bleu" onclick="voirFicheFournisseur('+f.id+')">👁️</button> '+
+        '<button class="btn small orange" onclick="modifierFournisseurListe('+f.id+')">✏️</button> '+
+        '<button class="btn small rouge" onclick="supprimerFournisseurListe('+f.id+')">🗑️</button></td>';
+    tb.appendChild(tr);
+  });
+  $('totauxListeF').innerHTML = '<div>Fournisseurs : '+actifs.length+'</div><div>Total achats : '+mt(gT)+'</div>'+
+    '<div>Acomptes : '+mt(gA)+'</div><div>Solde global : '+mt(gS)+'</div>';
+}
+
+function voirFicheFournisseur(id){ $('selectFournisseur').value = id; afficherPageF('fiche'); chargerFicheF(); }
+function modifierFournisseurListe(id){
+  var f = fournisseurs.find(function(x){ return x.id===id; });
+  $('modalContent').innerHTML = '<h3>✏️ Modifier</h3>'+
+    '<label>Nom *</label><input id="mfNom" value="'+f.nom+'">'+
+    '<label>Téléphone</label><input type="tel" id="mfTel" value="'+(f.tel||'')+'">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerModifFournisseur('+id+')">💾 Enregistrer</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerModifFournisseur(id){
+  var f = fournisseurs.find(function(x){ return x.id===id; });
+  var nom = $('mfNom').value.trim();
+  if(!nom){ alert('Nom requis'); return; }
+  f.nom = nom; f.tel = $('mfTel').value.trim();
+  sauverTout(); fermerModal(); renderListeF(); remplirSelectFournisseur(); chargerFicheF();
+}
+function supprimerFournisseurListe(id){
+  var f = fournisseurs.find(function(x){return x.id===id;});
+  if(!confirm('Supprimer "'+f.nom+'" ?')) return;
+  f.archive = true; sauverTout(); renderListeF(); remplirSelectFournisseur(); remplirSelectReleveF(); chargerFicheF();
+}
+
+function afficherReleveF(){
+  var fid = parseInt($('selectReleveF').value);
+  var zone = $('zoneReleveF');
+  if(!fid){ zone.innerHTML = '<p style="color:#888;">Aucun fournisseur.</p>'; return; }
+  var f = fournisseurs.find(function(x){ return x.id===fid; });
+  var mois = parseInt($('rMoisF').value), annee = parseInt($('rAnneeF').value);
+  var statut = $('rStatutF').value;
+  var nomsMois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var prefixe = annee+'-'+pad2(mois+1)+'-';
+
+  var fours = fournitures.filter(function(x){ return x.fournisseurId===fid && x.date.indexOf(prefixe)===0; });
+  fours.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  fours = fours.filter(function(x){
+    var total = x.qte*x.pu, solde = total - x.acompte;
+    if(statut === 'paye') return solde <= 0 && total > 0;
+    if(statut === 'partiel') return x.acompte > 0 && solde > 0;
+    if(statut === 'impaye') return x.acompte === 0 && solde > 0;
+    return true;
+  });
+
+  var totalGlobal=0, totalAc=0, totalSolde=0;
+  var html = '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RELEVÉ FOURNISSEUR</div>';
+  html += '<div class="section-titre">'+f.nom+' — Tél : '+(f.tel||'—')+' — '+nomsMois[mois]+' '+annee+' — Devise : '+symboleDevise()+'</div>';
+  html += '<div class="scroll-x"><table class="fact" style="margin-top:10px;"><thead><tr>'+
+    '<th>Date</th><th>Produit</th><th>Unité</th><th>Qté</th><th>P.U.</th><th>Total</th><th>Acompte</th><th>Solde</th><th>Statut</th>'+
+    '</tr></thead><tbody>';
+  if(fours.length === 0){
+    html += '<tr><td colspan="9" style="text-align:center;color:#888;padding:15px;">Aucune fourniture pour ce filtre</td></tr>';
+  } else {
+    fours.forEach(function(x){
+      var total = x.qte * x.pu;
+      var solde = total - x.acompte;
+      totalGlobal += total; totalAc += x.acompte; totalSolde += solde;
+      var st = (solde<=0) ? '<span class="badge ok">Payé</span>' :
+               (x.acompte>0 ? '<span class="badge partiel">Partiel</span>' : '<span class="badge impaye">Impayé</span>');
+      html += '<tr>'+
+        '<td>'+formaterDate(x.date)+'</td><td>'+x.produit+'</td><td>'+x.unite+'</td>'+
+        '<td>'+fmt(x.qte)+'</td><td>'+fmt(x.pu)+'</td>'+
+        '<td class="col-total">'+fmt(total)+'</td>'+
+        '<td class="col-acompte">'+fmt(x.acompte)+'</td>'+
+        '<td class="col-solde">'+fmt(solde)+'</td>'+
+        '<td>'+st+'</td></tr>';
+    });
+  }
+  html += '</tbody><tfoot><tr class="total">'+
+    '<td colspan="5">TOTAL</td>'+
+    '<td class="total-total">'+fmt(totalGlobal)+'</td>'+
+    '<td class="total-montant">'+fmt(totalAc)+'</td>'+
+    '<td class="total-solde">'+fmt(totalSolde)+'</td><td></td>'+
+  '</tr></tfoot></table></div>';
+
+  html += '<div class="totaux" style="margin-top:15px;">'+
+    '<div>Fournitures : '+fours.length+'</div>'+
+    '<div>Total achats : '+mt(totalGlobal)+'</div>'+
+    '<div>Acomptes : '+mt(totalAc)+'</div>'+
+    '<div style="background:#e30613;color:#fff;">Solde dû : '+mt(totalSolde)+'</div>'+
+  '</div>';
+
+  zone.innerHTML = html;
+}
+
+function afficherRapportF(type){
+  var zone = $('zoneRapportF');
+  var html = '';
+  if(type==='global'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT GLOBAL FOURNISSEURS</div>';
+    html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+      '<th>Fournisseur</th><th>Téléphone</th><th>Nb fournitures</th><th>Total achats</th><th>Acomptes</th><th>Solde dû</th>'+
+      '</tr></thead><tbody>';
+    var nb=0, t=0, a=0, s=0;
+    fournisseurs.filter(function(f){return !f.archive;}).forEach(function(f){
+      nb++;
+      var fours = fournitures.filter(function(x){ return x.fournisseurId===f.id; });
+      var tot=0, ac=0;
+      fours.forEach(function(x){ tot += x.qte*x.pu; ac += x.acompte; });
+      t+=tot; a+=ac; s+=(tot-ac);
+      html += '<tr><td>'+f.nom+'</td><td>'+(f.tel||'—')+'</td><td>'+fours.length+'</td>'+
+        '<td>'+fmt(tot)+'</td><td>'+fmt(ac)+'</td><td><b>'+fmt(tot-ac)+'</b></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="totaux" style="margin-top:15px;"><div>Fournisseurs : '+nb+'</div>'+
+      '<div>Total achats : '+mt(t)+'</div><div>Acomptes : '+mt(a)+'</div>'+
+      '<div>Solde global : '+mt(s)+'</div></div>';
+  }
+  else if(type==='detail'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT DÉTAILLÉ FOURNISSEURS</div>';
+    fournisseurs.filter(function(f){return !f.archive;}).forEach(function(f){
+      var fours = fournitures.filter(function(x){ return x.fournisseurId===f.id; });
+      fours.sort(function(a,b){ return a.date.localeCompare(b.date); });
+      var tot=0, ac=0;
+      html += '<div style="margin-top:18px;"><div class="section-titre">'+f.nom+' — '+(f.tel||'—')+'</div>';
+      html += '<div class="scroll-x"><table class="fact"><thead><tr>'+
+        '<th>Date</th><th>Produit</th><th>Unité</th><th>Qté</th><th>P.U.</th><th>Total</th><th>Acompte</th><th>Solde</th>'+
+        '</tr></thead><tbody>';
+      fours.forEach(function(x){
+        var total = x.qte*x.pu, solde = total - x.acompte;
+        tot += total; ac += x.acompte;
+        html += '<tr><td>'+formaterDate(x.date)+'</td><td>'+x.produit+'</td><td>'+x.unite+'</td>'+
+          '<td>'+fmt(x.qte)+'</td><td>'+fmt(x.pu)+'</td>'+
+          '<td class="col-total">'+fmt(total)+'</td><td class="col-acompte">'+fmt(x.acompte)+'</td>'+
+          '<td class="col-solde">'+fmt(solde)+'</td></tr>';
+      });
+      if(fours.length===0) html += '<tr><td colspan="8" style="text-align:center;color:#888;">Aucune fourniture</td></tr>';
+      html += '</tbody><tfoot><tr class="total"><td colspan="5">TOTAL</td>'+
+        '<td class="total-total">'+fmt(tot)+'</td><td class="total-montant">'+fmt(ac)+'</td>'+
+        '<td class="total-solde">'+fmt(tot-ac)+'</td></tr></tfoot></table></div></div>';
+    });
+  }
+  else if(type==='impayes'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT IMPAYÉS FOURNISSEURS</div>';
+    html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+      '<th>Fournisseur</th><th>Date</th><th>Produit</th><th>Total</th><th>Acompte</th><th>Solde dû</th>'+
+      '</tr></thead><tbody>';
+    var gS = 0;
+    fournisseurs.filter(function(f){return !f.archive;}).forEach(function(f){
+      var fours = fournitures.filter(function(x){ return x.fournisseurId===f.id; });
+      fours.forEach(function(x){
+        var total = x.qte*x.pu, solde = total - x.acompte;
+        if(solde > 0){
+          gS += solde;
+          html += '<tr><td>'+f.nom+'</td><td>'+formaterDate(x.date)+'</td><td>'+x.produit+'</td>'+
+            '<td>'+fmt(total)+'</td><td>'+fmt(x.acompte)+'</td>'+
+            '<td style="background:#e30613;color:#fff;font-weight:bold;">'+fmt(solde)+'</td></tr>';
+        }
+      });
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="totaux" style="margin-top:15px;"><div style="background:#e30613;color:#fff;font-size:14px;">TOTAL IMPAYÉS : '+mt(gS)+'</div></div>';
+  }
+  zone.innerHTML = html;
+}
+
+function envoyerWhatsAppF(){
+  var f = fournisseurs.find(function(x){ return x.id===parseInt($('selectFournisseur').value); });
+  if(!f) return;
+  var t = '*FICHE FOURNISSEUR*\n\n*Nom :* '+f.nom+'\n*Tél :* '+(f.tel||'—')+
+    '\n\n*Total achats :* '+$('fResumeTotal').textContent+'\n*Acomptes :* '+$('fResumeAcompte').textContent+
+    '\n*Solde à payer :* '+$('fResumeSolde').textContent;
+  window.open('https://wa.me/?text='+encodeURIComponent(t), '_blank');
+}
+function envoyerRapportWhatsAppF(){
+  var c = $('zoneRapportF').innerText;
+  if(!c){ alert('Générez un rapport'); return; }
+  window.open('https://wa.me/?text='+encodeURIComponent(c), '_blank');
+}
+function exporterWordF(){
+  var c = $('zoneFicheF').cloneNode(true);
+  c.querySelectorAll('.no-print').forEach(function(e){ e.remove(); });
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>'+
+    'body{font-family:Arial;} .titre-principal{background:#e30613;color:#fff;text-align:center;font-weight:bold;font-size:20px;padding:8px;border:3px solid #000;}'+
+    '.section-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;}.ligne-info{display:table;width:100%;border:3px solid #000;}'+
+    '.ligne-info > div{display:table-cell;width:50%;padding:8px;font-weight:bold;text-align:center;border-right:3px solid #000;}'+
+    '.cell-info.bleu{background:#0000ff;color:#fff;}.cell-info.blanc{background:#fff;}'+
+    'table.fact{width:100%;border-collapse:collapse;border:3px solid #000;}table.fact th,table.fact td{border:2px solid #000;padding:5px;text-align:center;}'+
+    'table.fact th{background:#1e3a5f;color:#fff;}table.fact td.col-total{background:#ffe600;}table.fact td.col-acompte{background:#00ff00;}'+
+    'table.fact td.col-solde{background:#e30613;color:#fff;}table.resume{width:100%;border-collapse:collapse;border:3px solid #000;}'+
+    'table.resume td{border:2px solid #000;padding:8px;font-weight:bold;text-align:center;}'+
+    '.obs-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;}.obs-zone{border:3px solid #000;padding:10px;}'+
+    '</style></head><body>'+c.innerHTML+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fiche_fournisseur.doc'; a.click();
+}
+function exporterRapportWordF(){
+  var c = $('zoneRapportF').innerHTML;
+  if(!c){ alert('Générez un rapport'); return; }
+  var html = '<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:12px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:5px;}th{background:#1e3a5f;color:#fff;}.titre-principal{background:#1e3a5f;color:#fff;padding:8px;text-align:center;font-weight:bold;}.section-titre{background:#ffe600;font-weight:bold;padding:4px 10px;border:2px solid #000;}.totaux div{background:#edf2f7;padding:6px 10px;display:inline-block;margin:4px;}</style></head><body>'+c+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rapport_fournisseurs.doc'; a.click();
+}
+function sauvegarderObservationF(){
+  var fid = parseInt($('selectFournisseur').value); if(!fid) return;
+  obsF[fid] = $('fObservation').value;
+  sauverTout();
+  alert('Observation sauvegardée ✅');
+}
+
+function remplirSelectProduit(){
+  var sel = $('selectProduit'); var courant = sel.value;
+  sel.innerHTML = '';
+  var actifs = stocks.filter(function(s){ return !s.archive; });
+  if(actifs.length===0){ var o=document.createElement('option'); o.textContent='-- Aucun --'; sel.appendChild(o); return; }
+  actifs.forEach(function(s){ var o=document.createElement('option'); o.value=s.id; o.textContent=s.produit+' ('+(s.unite||'')+')'; sel.appendChild(o); });
+  if(courant && stocks.find(function(s){return s.id==courant;})) sel.value=courant;
+  else sel.value = actifs[0].id;
+}
+
+function chargerFicheS(){
+  var sid = parseInt($('selectProduit').value);
+  var s = stocks.find(function(x){return x.id===sid;});
+  if(!s){
+    $('infoSNomLabel').textContent='—'; $('stockInitial').textContent='0';
+    $('dateInitiale').textContent='—'; $('corpsMvts').innerHTML='';
+    return;
+  }
+  $('infoSNomLabel').textContent = s.produit;
+  var ini = stockInitialData[sid] || { qte:0, date:'' };
+  $('stockInitial').textContent = fmt(ini.qte);
+  $('dateInitiale').textContent = ini.date ? formaterDate(ini.date) : '—';
+
+  var mvts = mouvements.filter(function(m){ return m.stockId===sid; });
+  mvts.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var stockCum = Number(ini.qte)||0, tE=0, tS=0, MIN=12, lignes=[];
+  mvts.forEach(function(m){
+    if(m.type==='entree'){ stockCum+=m.qte; tE+=m.qte; } else { stockCum-=m.qte; tS+=m.qte; }
+    lignes.push({ id:m.id, date:m.date, entree:(m.type==='entree'?m.qte:''), sortie:(m.type==='sortie'?m.qte:''), reste:stockCum, motif:m.motif||'' });
+  });
+  while(lignes.length < MIN) lignes.push({ id:null, date:'', entree:'', sortie:'', reste:(mvts.length>0?stockCum:''), motif:'' });
+
+  var html = '';
+  lignes.forEach(function(l){
+    html += '<tr><td>'+(l.date?formaterDate(l.date):'')+'</td>'+
+      '<td class="col-entree">'+(l.entree!==''?fmt(l.entree):'')+'</td>'+
+      '<td class="col-sortie">'+(l.sortie!==''?fmt(l.sortie):'')+'</td>'+
+      '<td class="col-reste">'+(l.reste!==''?fmt(l.reste):'')+'</td>'+
+      '<td>'+(l.motif||'')+'</td>'+
+      '<td class="no-print" style="padding:2px;">'+
+        (l.id ? '<button class="btn small rouge" onclick="supprimerMouvement('+l.id+')">🗑️</button>' : '')+'</td></tr>';
+  });
+  $('corpsMvts').innerHTML = html;
+  $('sTotalEntrees').textContent = fmt(tE);
+  $('sTotalSorties').textContent = fmt(tS);
+  $('sTotalReste').textContent = fmt(stockCum);
+  $('stockTheorique').textContent = fmt(stockCum);
+  if(!$('stockPhysique').dataset.manuel) $('stockPhysique').value = stockCum;
+  calculerEcart();
+  $('sObservation').value = obsS[sid] || '';
+}
+
+function calculerEcart(){
+  var theo = parseFloat($('stockTheorique').textContent) || 0;
+  var phys = parseFloat($('stockPhysique').value) || 0;
+  $('ecart').textContent = fmt(phys - theo);
+}
+$('stockPhysique').addEventListener('input', function(){ this.dataset.manuel='1'; calculerEcart(); });
+
+function ajouterMouvement(){
+  var sid = parseInt($('selectProduit').value); if(!sid) return;
+  var date = $('mDate').value, type = $('mType').value;
+  var qte = parseFloat($('mQte').value), motif = $('mMotif').value.trim();
+  if(!date || !qte || qte<=0){ msg('msgM','Champs invalides', false); return; }
+  var s = stocks.find(function(x){return x.id===sid;});
+  if(type==='sortie'){
+    var dispo = Number((stockInitialData[sid]||{qte:0}).qte)||0;
+    mouvements.filter(function(m){ return m.stockId===sid; }).forEach(function(m){ dispo += (m.type==='entree'?m.qte:-m.qte); });
+    if(qte > dispo){ msg('msgM','Stock insuffisant ('+fmt(dispo)+')', false); return; }
+  }
+  mouvements.push({ id:Date.now(), stockId:sid, date:date, type:type, qte:qte, motif:motif });
+  sauverTout();
+  $('mQte').value=1; $('mMotif').value=''; $('stockPhysique').dataset.manuel='';
+  msg('msgM','✅ Mouvement ajouté', true);
+  chargerFicheS(); renderDepot();
+}
+
+function supprimerMouvement(id){
+  if(!confirm('Supprimer ce mouvement ?')) return;
+  var m = mouvements.find(function(x){return x.id===id;});
+  var s = stocks.find(function(x){return x.id===m.stockId;});
+  if(s){ s.qte = (s.qte||0) + (m.type==='entree'?-m.qte:m.qte); }
+  mouvements = mouvements.filter(function(x){ return x.id!==id; });
+  sauverTout(); $('stockPhysique').dataset.manuel=''; chargerFicheS(); renderDepot();
+}
+
+function entrerStockAuto(produit, unite, qte, pu, motif){
+  var s = stocks.find(function(x){ return x.produit.toLowerCase()===produit.toLowerCase() && x.unite===unite && !x.archive; });
+  if(s){
+    var vAv = (s.qte||0) * (s.pu||0);
+    s.qte = (s.qte||0) + qte;
+    s.pu = s.qte>0 ? (vAv + qte*pu)/s.qte : pu;
+  } else {
+    s = { id:Date.now()+Math.random(), produit:produit, unite:unite, qte:qte, pu:pu, archive:false };
+    stocks.push(s);
+  }
+  mouvements.push({ id:Date.now()+Math.random(), stockId:s.id, date:new Date().toISOString().slice(0,10), type:'entree', qte:qte, motif:motif });
+  sauverTout();
+}
+
+function ouvrirModalNouveauProduit(){
+  $('modalContent').innerHTML = '<h3>➕ Nouvelle fiche de stock</h3>'+
+    '<label>Désignation *</label><input id="npNom">'+
+    '<label>Unité</label><select id="npUnite">'+['Pièce','Sac','Kg','m³','Litre','Barre'].map(function(u){return '<option>'+u+'</option>';}).join('')+'</select>'+
+    '<label>Stock initial</label><input type="number" id="npInitial" value="0" min="0">'+
+    '<label>Date initiale</label><input type="date" id="npDate">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerNouveauProduit()">Créer</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+  $('npDate').value = new Date().toISOString().slice(0,10);
+}
+function validerNouveauProduit(){
+  var nom = $('npNom').value.trim();
+  if(!nom){ alert('Nom requis'); return; }
+  var id = Date.now();
+  stocks.push({ id:id, produit:nom, unite:$('npUnite').value, archive:false });
+  stockInitialData[id] = { qte: parseFloat($('npInitial').value)||0, date: $('npDate').value };
+  sauverTout(); fermerModal();
+  remplirSelectProduit(); $('selectProduit').value = id; chargerFicheS(); renderDepot();
+}
+function supprimerProduit(){
+  var sid = parseInt($('selectProduit').value); if(!sid) return;
+  var s = stocks.find(function(x){return x.id===sid;});
+  if(!confirm('Supprimer "'+s.produit+'" ?')) return;
+  s.archive = true; sauverTout(); remplirSelectProduit(); chargerFicheS();
+}
+
+function ajouterProduitDepot(){
+  var nom = $('sNomInit').value.trim();
+  if(!nom){ msg('msgSP','Nom requis', false); return; }
+  var id = Date.now();
+  stocks.push({ id:id, produit:nom, unite:$('sUniteInit').value, archive:false });
+  stockInitialData[id] = { qte: parseFloat($('sInitialInit').value)||0, date: $('sDateInit').value || new Date().toISOString().slice(0,10) };
+  sauverTout();
+  $('sNomInit').value=''; $('sInitialInit').value=0;
+  msg('msgSP','✅ Ajouté au dépôt', true);
+  renderDepot(); remplirSelectProduit();
+}
+
+function renderDepot(){
+  var tb = $('corpsDepot'); tb.innerHTML = '';
+  var actifs = stocks.filter(function(s){ return !s.archive; });
+  if(actifs.length===0){ tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#888;">Aucun</td></tr>'; $('totauxDepot').innerHTML=''; return; }
+  var totV = 0;
+  actifs.forEach(function(s){
+    var ini = stockInitialData[s.id] || { qte:0 };
+    var e=0, so=0;
+    mouvements.filter(function(m){return m.stockId===s.id;}).forEach(function(m){ if(m.type==='entree') e+=m.qte; else so+=m.qte; });
+    var act = (Number(ini.qte)||0) + e - so;
+    totV += act;
+    var etat = act>0 ? '<span class="badge ok">OK</span>' : '<span class="badge impaye">Épuisé</span>';
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+s.produit+'</td><td>'+s.unite+'</td><td>'+fmt(ini.qte)+'</td><td>'+fmt(e)+'</td><td>'+fmt(so)+'</td>'+
+      '<td><b>'+fmt(act)+'</b></td><td>'+etat+'</td>'+
+      '<td class="no-print" style="white-space:nowrap;">'+
+        '<button class="btn small bleu" onclick="voirFicheS('+s.id+')">👁️</button> '+
+        '<button class="btn small orange" onclick="modifierProduitDepot('+s.id+')">✏️</button> '+
+        '<button class="btn small rouge" onclick="supprimerProduitDepot('+s.id+')">🗑️</button></td>';
+    tb.appendChild(tr);
+  });
+  $('totauxDepot').innerHTML = '<div>Produits : '+actifs.length+'</div><div>Total quantités : '+fmt(totV)+'</div>';
+}
+function voirFicheS(id){ remplirSelectProduit(); $('selectProduit').value=id; afficherPageS('fiche'); chargerFicheS(); }
+function modifierProduitDepot(id){
+  var s = stocks.find(function(x){ return x.id===id; });
+  var ini = stockInitialData[id] || { qte:0, date:'' };
+  $('modalContent').innerHTML = '<h3>✏️ Modifier le produit</h3>'+
+    '<label>Désignation *</label><input id="mpNom" value="'+s.produit+'">'+
+    '<label>Unité</label><select id="mpUnite">'+['Pièce','Sac','Kg','m³','Litre','Barre'].map(function(u){return '<option '+(s.unite===u?'selected':'')+'>'+u+'</option>';}).join('')+'</select>'+
+    '<label>Stock initial</label><input type="number" id="mpInitial" value="'+(ini.qte||0)+'" min="0">'+
+    '<label>Date initiale</label><input type="date" id="mpDate" value="'+(ini.date||'')+'">'+
+    '<div style="margin-top:15px;display:flex;gap:8px;">'+
+      '<button class="btn vert" onclick="validerModifProduit('+id+')">💾</button>'+
+      '<button class="btn gris" onclick="fermerModal()">Annuler</button></div>';
+  $('modal').classList.add('active');
+}
+function validerModifProduit(id){
+  var s = stocks.find(function(x){ return x.id===id; });
+  var nom = $('mpNom').value.trim();
+  if(!nom){ alert('Nom requis'); return; }
+  s.produit = nom; s.unite = $('mpUnite').value;
+  stockInitialData[id] = { qte: parseFloat($('mpInitial').value)||0, date: $('mpDate').value };
+  sauverTout(); fermerModal(); renderDepot(); remplirSelectProduit(); chargerFicheS();
+}
+function supprimerProduitDepot(id){
+  var s = stocks.find(function(x){return x.id===id;});
+  if(!confirm('Supprimer "'+s.produit+'" ?')) return;
+  s.archive = true; sauverTout(); renderDepot(); remplirSelectProduit(); chargerFicheS();
+}
+
+function afficherRapportS(type){
+  var zone = $('zoneRapportS');
+  var html = '';
+  if(type==='global'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT GLOBAL STOCK</div>';
+    html += '<div class="scroll-x"><table class="liste" style="margin-top:10px;"><thead><tr>'+
+      '<th>Produit</th><th>Unité</th><th>Stock initial</th><th>Entrées</th><th>Sorties</th><th>Stock actuel</th>'+
+      '</tr></thead><tbody>';
+    var nb=0, gE=0, gS=0, gA=0;
+    stocks.filter(function(s){return !s.archive;}).forEach(function(s){
+      nb++;
+      var ini = stockInitialData[s.id] || { qte:0 };
+      var e=0, so=0;
+      mouvements.filter(function(m){return m.stockId===s.id;}).forEach(function(m){ if(m.type==='entree') e+=m.qte; else so+=m.qte; });
+      var a = (Number(ini.qte)||0) + e - so;
+      gE+=e; gS+=so; gA+=a;
+      html += '<tr><td>'+s.produit+'</td><td>'+s.unite+'</td><td>'+fmt(ini.qte)+'</td><td>'+fmt(e)+'</td><td>'+fmt(so)+'</td><td><b>'+fmt(a)+'</b></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<div class="totaux" style="margin-top:15px;"><div>Produits : '+nb+'</div>'+
+      '<div>Total entrées : '+fmt(gE)+'</div><div>Total sorties : '+fmt(gS)+'</div>'+
+      '<div>Stock global : '+fmt(gA)+'</div></div>';
+  }
+  else if(type==='detail'){
+    html += '<div class="titre-principal" style="background:#1e3a5f;font-size:16px;">RAPPORT DÉTAILLÉ STOCK</div>';
+    stocks.filter(function(s){return !s.archive;}).forEach(function(s){
+      var ini = stockInitialData[s.id] || { qte:0 };
+      var mvts = mouvements.filter(function(m){ return m.stockId===s.id; }).sort(function(a,b){ return a.date.localeCompare(b.date); });
+      var stockCum = Number(ini.qte)||0, tE=0, tS=0;
+      html += '<div style="margin-top:18px;"><div class="section-titre">'+s.produit+' ('+s.unite+') — Stock initial : '+fmt(ini.qte)+'</div>';
+      html += '<div class="scroll-x"><table class="mvts"><thead><tr>'+
+        '<th>DATE</th><th>ENTRÉES</th><th>SORTIES</th><th>STOCK RESTANT</th><th>MOTIF</th></tr></thead><tbody>';
+      mvts.forEach(function(m){
+        if(m.type==='entree'){ stockCum+=m.qte; tE+=m.qte; } else { stockCum-=m.qte; tS+=m.qte; }
+        html += '<tr><td>'+formaterDate(m.date)+'</td>'+
+          '<td class="col-entree">'+(m.type==='entree'?fmt(m.qte):'')+'</td>'+
+          '<td class="col-sortie">'+(m.type==='sortie'?fmt(m.qte):'')+'</td>'+
+          '<td class="col-reste">'+fmt(stockCum)+'</td><td>'+(m.motif||'')+'</td></tr>';
+      });
+      if(mvts.length===0) html += '<tr><td colspan="5" style="text-align:center;color:#888;">Aucun mouvement</td></tr>';
+      html += '</tbody><tfoot><tr class="total"><td>TOTAL</td>'+
+        '<td class="total-total">'+fmt(tE)+'</td><td class="total-montant">'+fmt(tS)+'</td>'+
+        '<td class="total-solde">'+fmt(stockCum)+'</td><td></td></tr></tfoot></table></div></div>';
+    });
+  }
+  zone.innerHTML = html;
+}
+
+function envoyerWhatsAppS(){
+  var s = stocks.find(function(x){ return x.id===parseInt($('selectProduit').value); });
+  if(!s) return;
+  var t = '*FICHE DE STOCK*\n\n*Produit :* '+s.produit+
+    '\n*Stock initial :* '+$('stockInitial').textContent+' ('+$('dateInitiale').textContent+')'+
+    '\n*Entrées :* '+$('sTotalEntrees').textContent+'\n*Sorties :* '+$('sTotalSorties').textContent+
+    '\n*Stock restant :* '+$('sTotalReste').textContent+'\n*Écart :* '+$('ecart').textContent;
+  window.open('https://wa.me/?text='+encodeURIComponent(t), '_blank');
+}
+function envoyerRapportWhatsAppS(){
+  var c = $('zoneRapportS').innerText;
+  if(!c){ alert('Générez un rapport'); return; }
+  window.open('https://wa.me/?text='+encodeURIComponent(c), '_blank');
+}
+function exporterWordS(){
+  var c = $('zoneFicheS').cloneNode(true);
+  c.querySelectorAll('.no-print').forEach(function(e){ e.remove(); });
+  var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>'+
+    'body{font-family:Arial;} .titre-principal{background:#e30613;color:#fff;text-align:center;font-weight:bold;font-size:20px;padding:8px;border:3px solid #000;}'+
+    '.section-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;}.ligne-info{display:table;width:100%;border:3px solid #000;}'+
+    '.ligne-info > div{display:table-cell;width:50%;padding:8px;font-weight:bold;text-align:center;border-right:3px solid #000;}'+
+    '.cell-info.bleu{background:#0000ff;color:#fff;}.cell-info.rouge{background:#e30613;color:#fff;}'+
+    'table.mvts{width:100%;border-collapse:collapse;border:3px solid #000;}table.mvts th,table.mvts td{border:2px solid #000;padding:5px;text-align:center;}'+
+    'table.mvts th{background:#1e3a5f;color:#fff;}table.mvts td.col-entree{background:#00ff00;}table.mvts td.col-sortie{background:#ffe600;}'+
+    'table.mvts td.col-reste{background:#e30613;}table.inv{width:100%;border-collapse:collapse;border:3px solid #000;}'+
+    'table.inv td{border:2px solid #000;padding:8px;font-weight:bold;text-align:center;}'+
+    '.obs-titre{background:#ffe600;font-weight:bold;padding:6px;border:3px solid #000;}.obs-zone{border:3px solid #000;padding:10px;}'+
+    '</style></head><body>'+c.innerHTML+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'fiche_stock.doc'; a.click();
+}
+function exporterRapportWordS(){
+  var c = $('zoneRapportS').innerHTML;
+  if(!c){ alert('Générez un rapport'); return; }
+  var html = '<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:12px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #000;padding:5px;}th{background:#1e3a5f;color:#fff;}.titre-principal{background:#1e3a5f;color:#fff;padding:8px;text-align:center;font-weight:bold;}.section-titre{background:#ffe600;font-weight:bold;padding:4px 10px;border:2px solid #000;}.totaux div{background:#edf2f7;padding:6px 10px;display:inline-block;margin:4px;}</style></head><body>'+c+'</body></html>';
+  var blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rapport_stock.doc'; a.click();
+}
+function sauvegarderObservationS(){
+  var sid = parseInt($('selectProduit').value); if(!sid) return;
+  obsS[sid] = $('sObservation').value;
+  sauverTout();
+  alert('Observation sauvegardée ✅');
+}
+
+function fermerModal(){ $('modal').classList.remove('active'); }
+$('modal').addEventListener('click', function(e){ if(e.target===this) fermerModal(); });
+function msg(id, texte, ok){
+  var el = $(id); el.textContent = texte;
+  el.className = 'msg ' + (ok===false?'err':'ok');
+  setTimeout(function(){ el.className = 'msg'; }, 3000);
+}
+
+document.getElementById('selectDevise').value = devise;
+document.querySelectorAll('.lbl-devise').forEach(function(e){ e.textContent = devise; });
+
+remplirSelectJournalier();
+remplirSelectReleve();
+remplirSelectFournisseur();
+remplirSelectReleveF();
+remplirSelectProduit();
+$('pMois').value = new Date().getMonth();
+$('pAnnee').value = new Date().getFullYear();
+$('fDate').value = new Date().toISOString().slice(0,10);
+$('mDate').value = new Date().toISOString().slice(0,10);
+$('sDateInit').value = new Date().toISOString().slice(0,10);
+chargerFiche();
+chargerFicheF();
+chargerFicheS();
+renderDepot();
+
+/* ===== ENREGISTREMENT DU SERVICE WORKER (PWA) ===== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('service-worker.js')
+      .then(function(){ console.log('SW enregistré ✅'); })
+      .catch(function(e){ console.log('Erreur SW:', e); });
+  });
+}
+</script>
+</body>
+</html>
